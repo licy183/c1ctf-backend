@@ -1,0 +1,85 @@
+spring:
+  profiles:
+    active: dev
+
+---
+server:
+  port: 8082
+
+spring:
+  profiles: dev
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=utf-8mb4
+    username: testuser
+    password: testpassword
+
+  mail:
+    host: smtp.exmail.qq.com  # 对应各邮箱官方提示
+    username: mytest@example.com # 账号
+    password: passwordispassword # 企业邮箱为 客户端专用密码
+    properties:
+      mail:
+        smtp:
+          auth: true # 使用
+          starttls: # 使用 SSL 安全协议，必须配置如下
+            enable: true
+            required: true
+    port: 465  # 端口
+    protocol: smtps # 协议
+
+  redis:
+    database: 0
+    host: 127.0.0.1
+    port: 6379
+    password:
+
+spring.jpa:
+  show-sql: true
+  properties.hibernate.dialect: org.hibernate.dialect.MariaDBDialect
+  hibernate:
+    ddl-auto: update
+
+jwt:
+  secret-key: 7e44b756a607d4b6646a429119360ab12aee1b4e
+
+---
+server:
+  port: 8080
+
+spring:
+  profiles: prod
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mysql://mysql_db:3306/prod?useUnicode=true&characterEncoding=utf-8mb4
+    username: produser
+    password: prodpassword
+
+  mail:
+    host: smtp.exmail.qq.com  # 对应各邮箱官方提示
+    username: mytest@example.com # 账号
+    password: passwordispassword # 企业邮箱为 客户端专用密码
+    properties:
+      mail:
+        smtp:
+          auth: true # 使用
+          starttls: # 使用 SSL 安全协议，必须配置如下
+            enable: true
+            required: true
+    port: 465  # 端口
+    protocol: smtps # 协议
+
+  redis:
+    database: 0
+    host: redis_db
+    port: 6379
+    password:
+
+spring.jpa:
+  show-sql: false
+  properties.hibernate.dialect: org.hibernate.dialect.MariaDBDialect
+  hibernate:
+    ddl-auto: update
+
+jwt:
+  secret-key: e9fea7cca05a41c8b88da79f0d9ca3d7db39785e
