@@ -43,11 +43,13 @@ public class RankingService {
     @Getter
     List<RankChartInfo> rankChartInfos;
 
+    Boolean initialized = false;
+
     public long calcDynamicScore(int solvedCount, int baseScore, int minScore) {
         if (solvedCount <= 1) {
             return baseScore;
         }
-        double score = (baseScore / 1000.0) * (-28730.0 * Math.pow(solvedCount, 0.007236) + 29840.0);
+        double score = (baseScore / 1000.0) * (-28630.0 * Math.pow(solvedCount, 0.008236) + 29740.0);
         if (score < minScore) {
             return minScore;
         } else {
@@ -88,9 +90,10 @@ public class RankingService {
 
     @Scheduled(fixedRate = 30000) // 30 秒刷新一次
     public void autoRefreshRanking() {
-        if (!matchOpenChecker.check(null, null)) {
+        if (!matchOpenChecker.check(null, null) && initialized) {
             return; // 比赛没开始, 不排序
         }
+        initialized = true;
         this.refreshRanking();
     }
 
@@ -120,7 +123,7 @@ public class RankingService {
             rankingInfo.setScore(totalScore);
         }
 
-        tempRanking.sort(new Comparator<RankingInfo>() { // 似乎是不稳定排序, 待测试是否有效
+        tempRanking.sort(new Comparator<RankingInfo>() {
             @Override
             public int compare(RankingInfo a, RankingInfo b) {
                 if (b.getScore().equals(a.getScore())) {
@@ -147,6 +150,11 @@ public class RankingService {
         }
 
         List<RankChartInfo> tempRankingChartInfos = new ArrayList<>();
+        long currTime = System.currentTimeMillis();
+        if (currTime > configService.getMatchEndTime().toEpochMilli()) { // 比赛结束后只显示到结束时间
+            currTime = configService.getMatchEndTime().toEpochMilli();
+        }
+
         for (int i = 0; i < tempRanking.size() && i < 10; i++) {
             RankChartInfo rankChartInfo = new RankChartInfo();
             List<RankChartPoint> rankChartPoints = new ArrayList<>();
@@ -158,7 +166,10 @@ public class RankingService {
 
             List<Submission> submissions = submissionService.getBySubmitUserId(userId);
 
-            rankChartPoints.add(new RankChartPoint(configService.getMatchOpenTime().toEpochMilli(), 0L));
+
+            if (configService.getMatchOpenTime().toEpochMilli() < currTime) { // 开始后所有人在开始时间都是 0 分
+                rankChartPoints.add(new RankChartPoint(configService.getMatchOpenTime().toEpochMilli(), 0L));
+            }
 
             for (int j = submissions.size() - 1; j >= 0; j--) {
                 Submission sub = submissions.get(j);
@@ -169,7 +180,7 @@ public class RankingService {
                 rankChartPoints.add(rankChartPoint);
             }
 
-            rankChartPoints.add(new RankChartPoint(System.currentTimeMillis(), totalScore));
+            rankChartPoints.add(new RankChartPoint(currTime, totalScore));
             tempRankingChartInfos.add(rankChartInfo);
         }
 

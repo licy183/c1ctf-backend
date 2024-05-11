@@ -2,6 +2,7 @@ package club.c1sec.c1ctfplatform.controllers;
 
 import club.c1sec.c1ctfplatform.checkers.AdminChecker;
 import club.c1sec.c1ctfplatform.checkers.LoginChecker;
+import club.c1sec.c1ctfplatform.checkers.MatchOpenChecker;
 import club.c1sec.c1ctfplatform.enums.LogEvent;
 import club.c1sec.c1ctfplatform.interceptor.InterceptCheck;
 import club.c1sec.c1ctfplatform.limiter.SubmitRateLimiter;
@@ -45,13 +46,14 @@ public class SubmissionController {
     @Autowired
     RankingService rankingService;
 
+    @InterceptCheck(checkers = {MatchOpenChecker.class})
     @PostMapping("/submit_flag")
     public Response<Long> submitFlag(@RequestBody @Valid SubmitFlagRequest submitFlagRequest, BindingResult bindingResult) {
         Response<Long> response = new Response<>();
 
         User currentUser = authService.getCurrUser();
         if (currentUser.getBanned()) {
-            response.fail("未知错误");
+            response.fail("您已被封号, 无法再提交 flag");
             return response;
         }
 

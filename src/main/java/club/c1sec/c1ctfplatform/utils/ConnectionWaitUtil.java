@@ -48,6 +48,9 @@ public class ConnectionWaitUtil {
         try {
             URI uri = new URI(dsn);
             String host = uri.getHost();
+            if (host == null) {
+                System.out.println("Host is null, please verify your domain.");
+            }
             int port = uri.getPort();
             boolean success = false;
 
@@ -56,6 +59,8 @@ public class ConnectionWaitUtil {
                     Socket socket = new Socket();
                     socket.connect(new InetSocketAddress(host, port), 1);
                     socket.close();
+                    System.out.println("Sleep three sec to ensure mysql started.");
+                    Thread.sleep(3000);
                 } catch (IOException e) {
                     System.out.println("Connection Timeout in " + host + ":" + port);
                     Thread.sleep(1000);

@@ -26,7 +26,7 @@ public class RankingController {
     AuthService authService;
 
     @GetMapping("/get_ranking_list")
-    public Response<List<RankingInfo>> getRank() {
+    public Response<List<RankingInfo>> getRankingList() {
         Response<List<RankingInfo>> response = new Response<>();
 
         List<RankingInfo> ranking = rankingService.getRanking();
@@ -34,7 +34,15 @@ public class RankingController {
         if (end > ranking.size()) {
             end = ranking.size();
         }
-        ranking.subList(0, end);
+        ranking = ranking.subList(0, end);
+        response.success("", ranking);
+        return response;
+    }
+
+    @GetMapping("/get_all_ranking_list")
+    public Response<List<RankingInfo>> getAllRankingList() {
+        Response<List<RankingInfo>> response = new Response<>();
+        List<RankingInfo> ranking = rankingService.getRanking();
         response.success("", ranking);
         return response;
     }
