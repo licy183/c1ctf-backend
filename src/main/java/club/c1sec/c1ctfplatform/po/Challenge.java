@@ -48,4 +48,8 @@ public class Challenge {
     @Column
     @JsonProperty("is_open")
     private Boolean isOpen;
+
+    @Column
+    @JsonProperty("is_container")
+    private Boolean isContainer;
 }

@@ -30,6 +30,12 @@ public class ConfigService {
     private String registerOpenKey = "register_open";
     private boolean registerOpen;
 
+    private String containerCountKey = "container_count";
+    private int containerCount;
+
+    private String containerFlagFormatKey = "container_flag_format";
+    private String containerFlagFormat;
+
     @PostConstruct
     public void initConfigService() {
         this.refreshConfig();
@@ -54,6 +60,15 @@ public class ConfigService {
     public boolean getRegisterOpen() {
         return this.registerOpen;
     }
+
+    public int getContainerCount() {
+        return this.containerCount;
+    }
+
+    public String getContainerFlagFormat() {
+        return this.containerFlagFormat;
+    }
+
 
     public void setDynamicScoreBase(int value) {
         Config config = new Config();
@@ -80,6 +95,20 @@ public class ConfigService {
         Config config = new Config();
         config.setKey(matchEndTimeKey);
         config.setValue(value.toString());
+        configDao.save(config);
+    }
+
+    public void setContainerCount(int value) {
+        Config config = new Config();
+        config.setKey(containerCountKey);
+        config.setValue(Integer.toString(value));
+        configDao.save(config);
+    }
+
+    public void setContainerFlagFormat(String value) {
+        Config config = new Config();
+        config.setKey(containerFlagFormatKey);
+        config.setValue(value);
         configDao.save(config);
     }
 
@@ -126,6 +155,7 @@ public class ConfigService {
         }
     }
 
+
     public void refreshRegisterOpen() {
         try {
             Config config = configDao.findConfigByKey(registerOpenKey);
@@ -135,11 +165,33 @@ public class ConfigService {
         }
     }
 
+    public void refreshContainerCount() {
+        try {
+            Config config = configDao.findConfigByKey(registerOpenKey);
+            this.registerOpen = Boolean.parseBoolean(config.getValue());
+        } catch (Exception e) {
+            this.registerOpen = true;
+        }
+    }
+
+    public void refreshContainerFlagFormat() {
+        try {
+            Config config = configDao.findConfigByKey(registerOpenKey);
+            this.registerOpen = Boolean.parseBoolean(config.getValue());
+        } catch (Exception e) {
+            // todo: 默认的flag格式
+            this.containerFlagFormat = "C1CTF{}";
+        }
+    }
+
     public void refreshConfig() {
         this.refreshDynamicScoreBase();
         this.refreshDynamicScoreMin();
         this.refreshMatchOpenTime();
         this.refreshMatchEndTime();
         this.refreshRegisterOpen();
+        this.refreshContainerCount();
+        this.refreshContainerFlagFormat();
+
     }
 }

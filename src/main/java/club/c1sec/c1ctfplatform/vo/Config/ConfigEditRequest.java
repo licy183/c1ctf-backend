@@ -21,4 +21,10 @@ public class ConfigEditRequest {
 
     @JsonProperty("dynamic_score_min")
     private Integer dynamicScoreMin;
+
+    @JsonProperty("container_count")
+    private Integer containerCount;
+
+    @JsonProperty("container_flag_format")
+    private String containerFlagFormat;
 }

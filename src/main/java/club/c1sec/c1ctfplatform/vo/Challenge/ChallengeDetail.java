@@ -14,5 +14,9 @@ public class ChallengeDetail {
 
     private Long score;
 
-    private String url;
+    private String url; // 当isContainer=true，url表示链接模板"http://{host}:{port}"
+
+    @JsonProperty("is_container")
+    private Boolean isContainer; // 是否需要申请容器
+
 }

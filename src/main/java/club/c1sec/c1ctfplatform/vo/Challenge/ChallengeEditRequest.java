@@ -25,4 +25,7 @@ public class ChallengeEditRequest {
 
     @JsonProperty("score")
     private Long score;
+
+    @JsonProperty("is_container")
+    private Boolean isContainer;
 }

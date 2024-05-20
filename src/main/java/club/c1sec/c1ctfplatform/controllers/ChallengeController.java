@@ -212,4 +212,5 @@ public class ChallengeController {
         response.success("", challengeSolvedUsersWithCount);
         return response;
     }
+
 }

@@ -52,6 +52,12 @@ public class ConfigController {
         if (in.getDynamicScoreMin() != null) {
             configService.setDynamicScoreMin(in.getDynamicScoreMin());
         }
+        if (in.getContainerCount() != null) {
+            configService.setContainerCount(in.getContainerCount());
+        }
+        if (in.getContainerFlagFormat() != null) {
+            configService.setContainerFlagFormat(in.getContainerFlagFormat());
+        }
         configService.refreshConfig();
         Response<String> response = new Response<>();
         response.success("修改成功");
@@ -66,6 +72,8 @@ public class ConfigController {
         boolean registerOpen = configService.getRegisterOpen();
         Integer dynamicScoreBase = configService.getDynamicScoreBase();
         Integer dynamicScoreMin = configService.getDynamicScoreMin();
+        Integer containerCount = configService.getContainerCount();
+        String containerFlagFormat = configService.getContainerFlagFormat();
 
         ConfigEditRequest config = new ConfigEditRequest();
         config.setOpenTime(matchOpenTime);
@@ -73,6 +81,9 @@ public class ConfigController {
         config.setRegisterOpen(registerOpen);
         config.setDynamicScoreBase(dynamicScoreBase);
         config.setDynamicScoreMin(dynamicScoreMin);
+        // todo:保存到数据库，从数据库读取
+        config.setContainerCount(containerCount);
+        config.setContainerFlagFormat(containerFlagFormat);
 
         Response<ConfigEditRequest> response = new Response<>();
         response.success("", config);
