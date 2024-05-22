@@ -4,11 +4,14 @@ import club.c1sec.c1ctfplatform.checkers.AdminChecker;
 import club.c1sec.c1ctfplatform.interceptor.InterceptCheck;
 import club.c1sec.c1ctfplatform.po.Bulletin;
 import club.c1sec.c1ctfplatform.services.BulletinService;
-import club.c1sec.c1ctfplatform.vo.Bulletin.BulletinEditRequest;
+import club.c1sec.c1ctfplatform.vo.bulletin.BulletinDeleteRequest;
+import club.c1sec.c1ctfplatform.vo.bulletin.BulletinEditRequest;
 import club.c1sec.c1ctfplatform.vo.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.Date;
 import java.util.List;
 
@@ -66,19 +69,20 @@ public class BulletinController {
 
     @InterceptCheck(checkers = {AdminChecker.class})
     @PostMapping("/delete_bulletin")
-    public Response<String> deleteBulletin(@RequestBody BulletinEditRequest req) {
+    public Response<String> deleteBulletin(@RequestBody @Valid BulletinDeleteRequest req,
+                                           BindingResult bindingResult) {
         Response<String> response = new Response<>();
-        if (req.getBulletinId() != null) {
-            Long bulletinId = req.getBulletinId();
-            Bulletin bulletin = bulletinService.findByBulletinId(bulletinId);
-            if (bulletin != null) {
-                bulletinService.deleteByBulletinId(bulletinId);
-                response.success("删除成功");
-            } else {
-                response.fail("此公告 ID 不存在");
-            }
+        if (bindingResult.hasErrors()) {
+            response.fail("无效参数");
+            return response;
+        }
+        Long bulletinId = req.getBulletinId();
+        Bulletin bulletin = bulletinService.findByBulletinId(bulletinId);
+        if (bulletin != null) {
+            bulletinService.deleteByBulletinId(bulletinId);
+            response.success("删除成功");
         } else {
-            response.invalid("无效参数");
+            response.fail("此公告 ID 不存在");
         }
         return response;
     }

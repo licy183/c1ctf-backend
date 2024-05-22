@@ -1,9 +1,9 @@
 package club.c1sec.c1ctfplatform.dao;
 
 import club.c1sec.c1ctfplatform.po.Challenge;
-import club.c1sec.c1ctfplatform.vo.Attachment.AttachmentChallengeInfo;
-import club.c1sec.c1ctfplatform.vo.Challenge.ChallengeInfo;
-import club.c1sec.c1ctfplatform.vo.Challenge.ChallengeSolvedUser;
+import club.c1sec.c1ctfplatform.vo.attachment.AttachmentChallengeInfo;
+import club.c1sec.c1ctfplatform.vo.challenge.ChallengeInfo;
+import club.c1sec.c1ctfplatform.vo.challenge.ChallengeSolvedUser;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,16 +19,19 @@ public interface ChallengeDao extends JpaRepository<Challenge, Long> {
 
     Challenge findByChallengeId(Long id);
 
-    @Query("SELECT new club.c1sec.c1ctfplatform.vo.Attachment.AttachmentChallengeInfo(chall.challengeId, atta.attachmentId, chall.challengeSeed, chall.isOpen) FROM Challenge chall INNER JOIN Attachment atta ON atta.challengeId = chall.challengeId WHERE atta.flag = :flag")
+    @Query("SELECT new club.c1sec.c1ctfplatform.vo.attachment.AttachmentChallengeInfo(chall.challengeId, atta.attachmentId, chall.challengeSeed, chall.isOpen) FROM Challenge chall INNER JOIN Attachment atta ON atta.challengeId = chall.challengeId WHERE atta.flag = :flag")
     AttachmentChallengeInfo findChallengeByFlag(String flag);
 
-    @Query("SELECT new club.c1sec.c1ctfplatform.vo.Challenge.ChallengeInfo(chall.challengeId, chall.title, cate.name, chall.score) FROM Challenge chall LEFT JOIN Category cate ON cate.categoryId = chall.categoryId WHERE chall.isOpen = true")
+    @Query("SELECT new club.c1sec.c1ctfplatform.vo.challenge.ChallengeInfo(chall.challengeId, chall.title, cate.name, chall.score) FROM Challenge chall LEFT JOIN Category cate ON cate.categoryId = chall.categoryId WHERE chall.isOpen = true")
     List<ChallengeInfo> findAllOpenChallengeInfo();
 
     Boolean existsByChallengeId(Long id);
 
     void deleteByChallengeId(Long id);
 
-    @Query("SELECT new club.c1sec.c1ctfplatform.vo.Challenge.ChallengeSolvedUser(u.username, sub.submitTime) FROM Submission sub LEFT JOIN User u ON sub.submitUserId = u.userId WHERE sub.challengeId = :id AND u.banned = false AND u.userRole <> club.c1sec.c1ctfplatform.enums.UserRole.USER_ROLE_ADMIN ORDER BY sub.submitTime ASC")
+    @Query("SELECT new club.c1sec.c1ctfplatform.vo.challenge.ChallengeSolvedUser(u.username, sub.submitTime) FROM Submission sub LEFT JOIN User u ON sub.submitUserId = u.userId WHERE sub.challengeId = :id AND u.banned = false AND u.userRole <> club.c1sec.c1ctfplatform.enums.UserRole.USER_ROLE_ADMIN ORDER BY sub.submitTime ASC")
     List<ChallengeSolvedUser> getSolvedUserByChallengeId(Long id, Pageable pageable);
+
+    @Query("SELECT chall FROM Container con INNER JOIN Challenge chall ON con.challengeId = chall.challengeId WHERE con.flag = :flag AND con.userId = :userId")
+    Challenge findContaineredChallengeInfoByFlagAndUser(String flag, Long userId);
 }

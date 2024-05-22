@@ -1,10 +1,12 @@
 package club.c1sec.c1ctfplatform.services;
 
 import club.c1sec.c1ctfplatform.dao.ChallengeDao;
+import club.c1sec.c1ctfplatform.dao.ContaineredChallengeDao;
 import club.c1sec.c1ctfplatform.po.Challenge;
-import club.c1sec.c1ctfplatform.vo.Attachment.AttachmentChallengeInfo;
-import club.c1sec.c1ctfplatform.vo.Challenge.ChallengeInfo;
-import club.c1sec.c1ctfplatform.vo.Challenge.ChallengeSolvedUser;
+import club.c1sec.c1ctfplatform.po.ContaineredChallenge;
+import club.c1sec.c1ctfplatform.vo.attachment.AttachmentChallengeInfo;
+import club.c1sec.c1ctfplatform.vo.challenge.ChallengeInfo;
+import club.c1sec.c1ctfplatform.vo.challenge.ChallengeSolvedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +19,9 @@ import java.util.Random;
 public class ChallengeService {
     @Autowired
     ChallengeDao challengeDao;
+
+    @Autowired
+    ContaineredChallengeDao containeredChallengeDao;
 
     public List<Challenge> getAllChallenge() {
         return challengeDao.findAll();
@@ -53,4 +58,17 @@ public class ChallengeService {
         t = t < 0 ? -t : t;
         return t % attachmentAmount;
     }
+
+    public ContaineredChallenge getContaineredChallengeConfigByChallengeId(Long challengeId) {
+        return containeredChallengeDao.findContaineredChallengeByChallengeId(challengeId);
+    }
+
+    public void saveContaineredChallenge(ContaineredChallenge containeredChallenge) {
+        containeredChallengeDao.save(containeredChallenge);
+    }
+
+    public Challenge getContaineredChallengeInfoByFlagAndUser(String flag, Long userId) {
+        return challengeDao.findContaineredChallengeInfoByFlagAndUser(flag, userId);
+    }
+
 }

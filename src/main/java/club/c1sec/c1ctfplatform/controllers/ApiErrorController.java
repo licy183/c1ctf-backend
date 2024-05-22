@@ -32,9 +32,4 @@ public class ApiErrorController extends AbstractErrorController {
         }
         return response;
     }
-
-    @Override
-    public String getErrorPath() {
-        return "/error";
-    }
 }

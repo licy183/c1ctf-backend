@@ -42,27 +42,15 @@ public class Interceptor implements HandlerInterceptor {
         Method method = handlerMethod.getMethod();
 
         if (method.isAnnotationPresent(InterceptCheck.class)) {
-            Class[] classes = method.getAnnotation(InterceptCheck.class).checkers();
-            for (Class clazz : classes) {
-                BasicChecker checker = (BasicChecker) context.getBean(clazz);
-                if (!checker.check(httpServletRequest, httpServletResponse)) {
-                    httpServletRequest.setAttribute("club.c1sec.CheckError", checker.errorMessage());
-                    throw new CheckFailException("Check failed in " + clazz.getName() + " with " + method.getName());
-                }
-            }
+            Class<?>[] classes = method.getAnnotation(InterceptCheck.class).checkers();
+            _checkCheckers(classes, method, context, httpServletRequest, httpServletResponse);
         }
 
-        Class methodClass = method.getDeclaringClass();
+        Class<?> methodClass = method.getDeclaringClass();
         if (methodClass.isAnnotationPresent(InterceptCheck.class)) {
-            InterceptCheck intercept = (InterceptCheck) methodClass.getAnnotation(InterceptCheck.class);
-            Class[] classes = intercept.checkers();
-            for (Class clazz : classes) {
-                BasicChecker checker = (BasicChecker) context.getBean(clazz);
-                if (!checker.check(httpServletRequest, httpServletResponse)) {
-                    httpServletRequest.setAttribute("club.c1sec.CheckError", checker.errorMessage());
-                    throw new CheckFailException("Check failed in " + clazz.getName() + " with " + method.getName());
-                }
-            }
+            InterceptCheck intercept = methodClass.getAnnotation(InterceptCheck.class);
+            Class<?>[] classes = intercept.checkers();
+            _checkCheckers(classes, method, context, httpServletRequest, httpServletResponse);
         }
         return true;
     }
@@ -70,5 +58,17 @@ public class Interceptor implements HandlerInterceptor {
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
         AuthService.destroy();
+    }
+
+    private static void _checkCheckers(Class<?>[] classes, Method method, ApplicationContext context,
+                                       HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse)
+            throws CheckFailException {
+        for (Class<?> clazz : classes) {
+            BasicChecker checker = (BasicChecker) context.getBean(clazz);
+            if (!checker.check(httpServletRequest, httpServletResponse)) {
+                httpServletRequest.setAttribute("club.c1sec.CheckError", checker.errorMessage());
+                throw new CheckFailException("Check failed in " + clazz.getName() + " with " + method.getName());
+            }
+        }
     }
 }

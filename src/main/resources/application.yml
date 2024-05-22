@@ -7,7 +7,7 @@ server:
   port: 8082
 
 spring:
-  profiles: dev
+  config.activate.on-profile: dev
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=utf-8mb4
@@ -34,21 +34,37 @@ spring:
     port: 6379
     password:
 
-spring.jpa:
-  show-sql: true
-  properties.hibernate.dialect: org.hibernate.dialect.MariaDBDialect
-  hibernate:
-    ddl-auto: update
+  jpa:
+    show-sql: true
+    properties.hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate.ddl-auto: update
+
+  data:
+    redis:
+      repositories:
+        enabled: false
 
 jwt:
   secret-key: 7e44b756a607d4b6646a429119360ab12aee1b4e
+
+container:
+  create_url: http://test-container.c1sec.club:5001/env/create
+  get_url: http://test-container.c1sec.club:5001/env/get/
+  renew_url: http://test-container.c1sec.club:5001/env/renew/
+  delete_url: http://test-container.c1sec.club:5001/env/delete/
+  list_url: http://test-container.c1sec.club:5001/env/list
+
+  proxy_host: 127.0.0.1
+  proxy_port: 8888
 
 ---
 server:
   port: 8080
 
 spring:
-  profiles: prod
+  config:
+    activate:
+      on-profile: prod
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mysql://mysql_db:3306/prod?useUnicode=true&characterEncoding=utf-8mb4
@@ -66,20 +82,38 @@ spring:
           starttls: # 使用 SSL 安全协议，必须配置如下
             enable: true
             required: true
+        smtps:
+          socks:
+            host: 192.168.100.10
+            post: 1080
     port: 465  # 端口
     protocol: smtps # 协议
 
   redis:
     database: 0
-    host: redis_db
+    host: redis-db
     port: 6379
     password:
 
-spring.jpa:
-  show-sql: false
-  properties.hibernate.dialect: org.hibernate.dialect.MariaDBDialect
-  hibernate:
-    ddl-auto: update
+  jpa:
+    show-sql: true
+    properties.hibernate.dialect: org.hibernate.dialect.MariaDBDialect
+    hibernate.ddl-auto: update
+
+  data:
+    redis:
+      repositories:
+        enabled: false
 
 jwt:
   secret-key: e9fea7cca05a41c8b88da79f0d9ca3d7db39785e
+
+container:
+  create_url: http://192.168.100.10:5001/env/create
+  get_url: http://192.168.100.10:5001/env/get/
+  renew_url: http://192.168.100.10:5001/env/renew/
+  delete_url: http://192.168.100.10:5001/env/delete/
+  list_url: http://192.168.100.10:5001/env/list
+
+  proxy_host: 192.168.100.10
+  proxy_port: 8888

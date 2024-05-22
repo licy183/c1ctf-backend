@@ -1,4 +1,4 @@
-package club.c1sec.c1ctfplatform.vo.Challenge;
+package club.c1sec.c1ctfplatform.vo.challenge;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

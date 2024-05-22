@@ -4,7 +4,7 @@ import club.c1sec.c1ctfplatform.checkers.AdminChecker;
 import club.c1sec.c1ctfplatform.interceptor.InterceptCheck;
 import club.c1sec.c1ctfplatform.po.Log;
 import club.c1sec.c1ctfplatform.services.LogService;
-import club.c1sec.c1ctfplatform.vo.Log.GetLogRequest;
+import club.c1sec.c1ctfplatform.vo.log.GetLogRequest;
 import club.c1sec.c1ctfplatform.vo.PageList;
 import club.c1sec.c1ctfplatform.vo.PageListRequest;
 import club.c1sec.c1ctfplatform.vo.Response;

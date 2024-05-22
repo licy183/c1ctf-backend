@@ -12,8 +12,8 @@ import javax.mail.internet.MimeMessage;
 
 @Service
 public class MailService {
-    private String mailCodeRedisKey = "MAIL_CODE_";
-    private String charset = "0123456789ABCEFGHJKLMNPRSTUVWXYZ";
+    private final String mailCodeRedisKey = "MAIL_CODE_";
+    private final String charset = "0123456789ABCEFGHJKLMNPRSTUVWXYZ";
 
     public final static int MAIL_TYPE_REGISTER = 0;
     public final static int MAIL_TYPE_FORGET_PASSWORD = 1;

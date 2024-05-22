@@ -4,9 +4,9 @@ import club.c1sec.c1ctfplatform.checkers.AdminChecker;
 import club.c1sec.c1ctfplatform.interceptor.InterceptCheck;
 import club.c1sec.c1ctfplatform.po.Attachment;
 import club.c1sec.c1ctfplatform.services.AttachmentService;
-import club.c1sec.c1ctfplatform.vo.Attachment.DeleteAttachmentRequest;
-import club.c1sec.c1ctfplatform.vo.Attachment.EditAttachmentRequest;
-import club.c1sec.c1ctfplatform.vo.Attachment.GetAttachmentRequest;
+import club.c1sec.c1ctfplatform.vo.attachment.DeleteAttachmentRequest;
+import club.c1sec.c1ctfplatform.vo.attachment.EditAttachmentRequest;
+import club.c1sec.c1ctfplatform.vo.attachment.GetAttachmentRequest;
 import club.c1sec.c1ctfplatform.vo.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
@@ -26,7 +26,8 @@ public class AttachmentController {
     AttachmentService attachmentService;
 
     @PostMapping("/get_attachment")
-    public Response<List<Attachment>> getAttachment(@RequestBody @Valid GetAttachmentRequest getAttachmentRequest, BindingResult bindingResult) {
+    public Response<List<Attachment>> getAttachment(@RequestBody @Valid GetAttachmentRequest getAttachmentRequest,
+                                                    BindingResult bindingResult) {
         Response<List<Attachment>> response = new Response<>();
         if (bindingResult.hasErrors()) {
             response.invalid(bindingResult.getFieldError().getDefaultMessage());
@@ -68,7 +69,8 @@ public class AttachmentController {
     }
 
     @PostMapping("/delete_attachment")
-    public Response<String> deleteAttachment(@RequestBody @Valid DeleteAttachmentRequest deleteAttachmentRequest, BindingResult bindingResult) {
+    public Response<String> deleteAttachment(@RequestBody @Valid DeleteAttachmentRequest deleteAttachmentRequest,
+                                             BindingResult bindingResult) {
         Response<String> response = new Response<>();
         if (bindingResult.hasErrors()) {
             response.invalid(bindingResult.getFieldError().getDefaultMessage());

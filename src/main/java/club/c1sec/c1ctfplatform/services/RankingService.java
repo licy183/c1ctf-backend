@@ -1,11 +1,12 @@
 package club.c1sec.c1ctfplatform.services;
 
 import club.c1sec.c1ctfplatform.checkers.MatchOpenChecker;
+import club.c1sec.c1ctfplatform.enums.UserRole;
 import club.c1sec.c1ctfplatform.po.Challenge;
 import club.c1sec.c1ctfplatform.po.Submission;
-import club.c1sec.c1ctfplatform.vo.Ranking.RankChartInfo;
-import club.c1sec.c1ctfplatform.vo.Ranking.RankChartPoint;
-import club.c1sec.c1ctfplatform.vo.Ranking.RankingInfo;
+import club.c1sec.c1ctfplatform.vo.ranking.RankChartInfo;
+import club.c1sec.c1ctfplatform.vo.ranking.RankChartPoint;
+import club.c1sec.c1ctfplatform.vo.ranking.RankingInfo;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -42,6 +43,9 @@ public class RankingService {
 
     @Getter
     List<RankChartInfo> rankChartInfos;
+
+    @Getter
+    List<RankChartInfo> studentRankChartInfos;
 
     Boolean initialized = false;
 
@@ -184,8 +188,46 @@ public class RankingService {
             tempRankingChartInfos.add(rankChartInfo);
         }
 
+        List<RankChartInfo> tempStudentRankingChartInfos = new ArrayList<>();
+
+        int total = 10;
+
+        for (int i = 0; i < tempRanking.size() && total >= 0; i++) {
+            if (tempRanking.get(i).getUserRole() != UserRole.USER_ROLE_STUDENT) {
+                continue;
+            }
+            --total;
+            RankChartInfo rankChartInfo = new RankChartInfo();
+            List<RankChartPoint> rankChartPoints = new ArrayList<>();
+
+            Long userId = tempRanking.get(i).getUserId();
+            Long totalScore = 0L;
+            rankChartInfo.setUsername(tempRanking.get(i).getUsername());
+            rankChartInfo.setPoints(rankChartPoints);
+
+            List<Submission> submissions = submissionService.getBySubmitUserId(userId);
+
+
+            if (configService.getMatchOpenTime().toEpochMilli() < currTime) { // 开始后所有人在开始时间都是 0 分
+                rankChartPoints.add(new RankChartPoint(configService.getMatchOpenTime().toEpochMilli(), 0L));
+            }
+
+            for (int j = submissions.size() - 1; j >= 0; j--) {
+                Submission sub = submissions.get(j);
+                RankChartPoint rankChartPoint = new RankChartPoint();
+                totalScore += challenge2ScoreMap.get(sub.getChallengeId());
+                rankChartPoint.setX(sub.getSubmitTime().getTime());
+                rankChartPoint.setY(totalScore);
+                rankChartPoints.add(rankChartPoint);
+            }
+
+            rankChartPoints.add(new RankChartPoint(currTime, totalScore));
+            tempStudentRankingChartInfos.add(rankChartInfo);
+        }
+
         this.ranking = tempRanking;
         this.reverseRanking = tempReverseRanking;
+        this.studentRankChartInfos = tempStudentRankingChartInfos;
         this.rankChartInfos = tempRankingChartInfos;
     }
 }

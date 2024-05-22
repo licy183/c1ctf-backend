@@ -6,13 +6,14 @@ import club.c1sec.c1ctfplatform.checkers.MatchOpenChecker;
 import club.c1sec.c1ctfplatform.enums.LogEvent;
 import club.c1sec.c1ctfplatform.interceptor.InterceptCheck;
 import club.c1sec.c1ctfplatform.limiter.SubmitRateLimiter;
+import club.c1sec.c1ctfplatform.po.Challenge;
 import club.c1sec.c1ctfplatform.po.Submission;
 import club.c1sec.c1ctfplatform.po.User;
 import club.c1sec.c1ctfplatform.services.*;
-import club.c1sec.c1ctfplatform.vo.Attachment.AttachmentChallengeInfo;
+import club.c1sec.c1ctfplatform.vo.attachment.AttachmentChallengeInfo;
 import club.c1sec.c1ctfplatform.vo.Response;
-import club.c1sec.c1ctfplatform.vo.Submission.GetUserSubmitRequest;
-import club.c1sec.c1ctfplatform.vo.Submission.SubmitFlagRequest;
+import club.c1sec.c1ctfplatform.vo.submission.GetUserSubmitRequest;
+import club.c1sec.c1ctfplatform.vo.submission.SubmitFlagRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -97,8 +98,26 @@ public class SubmissionController {
                 }
             }
         } else {
-            response.fail("无效flag");
-            logService.log(LogEvent.LOG_EVENT_SUBMIT_ERROR, currentUser.getUsername(), flag);
+            // 要么是容器题目，要么提交错误
+            Challenge chall = challengeService.getContaineredChallengeInfoByFlagAndUser(flag, currentUser.getUserId());
+            if (chall != null && chall.getIsOpen()) {
+                if (!submissionService.isSubmissionExist(chall.getChallengeId(), currentUser.getUserId())) {
+                    Submission submission = new Submission();
+                    submission.setChallengeId(chall.getChallengeId());
+                    submission.setSubmitTime(new Date());
+                    submission.setSubmitUserId(currentUser.getUserId());
+                    submissionService.addSubmission(submission);
+                    response.success("提交成功", chall.getChallengeId());
+                    rankingService.refreshOneDynamicScore(chall.getChallengeId()); // 刷新这个题目的动态分数 & 解题人数
+                    logService.log(LogEvent.LOG_EVENT_SUBMIT_SUCCESS, currentUser.getUsername(), flag, chall.getChallengeId().toString());
+                } else {
+                    response.fail("你已经提交过该flag了");
+                    logService.log(LogEvent.LOG_EVENT_SUBMIT_REPEAT, currentUser.getUsername(), flag, chall.getChallengeId().toString());
+                }
+            } else {
+                response.fail("无效flag");
+                logService.log(LogEvent.LOG_EVENT_SUBMIT_ERROR, currentUser.getUsername(), flag);
+            }
         }
         return response;
     }

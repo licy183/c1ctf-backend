@@ -15,25 +15,25 @@ public class ConfigService {
     @Autowired
     ConfigDao configDao;
 
-    private String dynamicScoreBaseKey = "dynamic_score_base";
+    private final String dynamicScoreBaseKey = "dynamic_score_base";
     private int dynamicScoreBase;
 
-    private String dynamicScoreMinKey = "dynamic_score_min";
+    private final String dynamicScoreMinKey = "dynamic_score_min";
     private int dynamicScoreMin;
 
-    private String matchOpenTimeKey = "match_open_time";
+    private final String matchOpenTimeKey = "match_open_time";
     private Instant matchOpenTime;
 
-    private String matchEndTimeKey = "match_end_time";
+    private final String matchEndTimeKey = "match_end_time";
     private Instant matchEndTime;
 
-    private String registerOpenKey = "register_open";
+    private final String registerOpenKey = "register_open";
     private boolean registerOpen;
 
-    private String containerCountKey = "container_count";
+    private final String containerCountKey = "container_count";
     private int containerCount;
 
-    private String containerFlagFormatKey = "container_flag_format";
+    private final String containerFlagFormatKey = "container_flag_format";
     private String containerFlagFormat;
 
     @PostConstruct
@@ -167,20 +167,19 @@ public class ConfigService {
 
     public void refreshContainerCount() {
         try {
-            Config config = configDao.findConfigByKey(registerOpenKey);
-            this.registerOpen = Boolean.parseBoolean(config.getValue());
+            Config config = configDao.findConfigByKey(containerCountKey);
+            this.containerCount = Integer.parseInt(config.getValue());
         } catch (Exception e) {
-            this.registerOpen = true;
+            this.containerCount = 0;
         }
     }
 
     public void refreshContainerFlagFormat() {
         try {
-            Config config = configDao.findConfigByKey(registerOpenKey);
-            this.registerOpen = Boolean.parseBoolean(config.getValue());
+            Config config = configDao.findConfigByKey(containerFlagFormatKey);
+            this.containerFlagFormat = config.getValue();
         } catch (Exception e) {
-            // todo: 默认的flag格式
-            this.containerFlagFormat = "C1CTF{}";
+            this.containerFlagFormat = "c1ctf{}";
         }
     }
 

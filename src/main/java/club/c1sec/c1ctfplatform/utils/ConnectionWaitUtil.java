@@ -1,5 +1,6 @@
 package club.c1sec.c1ctfplatform.utils;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.beans.factory.config.YamlProcessor;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.io.ClassPathResource;
@@ -10,6 +11,7 @@ import java.net.Socket;
 import java.net.URI;
 import java.util.Properties;
 
+@UtilityClass
 public class ConnectionWaitUtil {
     public static void waitForDatabase() {
         YamlPropertiesFactoryBean yamlFactory = new YamlPropertiesFactoryBean();
@@ -20,7 +22,7 @@ public class ConnectionWaitUtil {
         yamlFactory.setDocumentMatchers(new YamlProcessor.DocumentMatcher() {
             @Override
             public YamlProcessor.MatchStatus matches(Properties properties) {
-                String name = properties.getProperty("spring.profiles");
+                String name = properties.getProperty("spring.config.activate.on-profile");
                 if (profile.equals(name)) {
                     return YamlProcessor.MatchStatus.FOUND;
                 } else {

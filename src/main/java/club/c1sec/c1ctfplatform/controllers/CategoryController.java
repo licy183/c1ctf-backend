@@ -5,12 +5,14 @@ import club.c1sec.c1ctfplatform.checkers.LoginChecker;
 import club.c1sec.c1ctfplatform.interceptor.InterceptCheck;
 import club.c1sec.c1ctfplatform.po.Category;
 import club.c1sec.c1ctfplatform.services.CategoryService;
-import club.c1sec.c1ctfplatform.vo.Category.CategoryDeleteRequest;
-import club.c1sec.c1ctfplatform.vo.Category.CategoryEditRequest;
+import club.c1sec.c1ctfplatform.vo.category.CategoryDeleteRequest;
+import club.c1sec.c1ctfplatform.vo.category.CategoryEditRequest;
 import club.c1sec.c1ctfplatform.vo.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @InterceptCheck(checkers = {LoginChecker.class})
@@ -52,19 +54,20 @@ public class CategoryController {
 
     @InterceptCheck(checkers = {AdminChecker.class})
     @PostMapping("/delete_category")
-    public Response<String> deleteCategory(@RequestBody CategoryDeleteRequest req) {
+    public Response<String> deleteCategory(@RequestBody @Valid CategoryDeleteRequest req,
+                                           BindingResult bindingResult) {
         Response<String> response = new Response<>();
-        if (req.getCategoryId() != null) {
-            Long categoryId = req.getCategoryId();
-            Category category = categoryService.findByCategoryId(categoryId);
-            if (category != null) {
-                categoryService.deleteByCategoryId(categoryId);
-                response.success("删除成功");
-            } else {
-                response.fail("此分类 ID 不存在");
-            }
-        } else {
+        if (bindingResult.hasErrors()) {
             response.invalid("无效参数");
+            return response;
+        }
+        Long categoryId = req.getCategoryId();
+        Category category = categoryService.findByCategoryId(categoryId);
+        if (category != null) {
+            categoryService.deleteByCategoryId(categoryId);
+            response.success("删除成功");
+        } else {
+            response.fail("此分类 ID 不存在");
         }
         return response;
     }

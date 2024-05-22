@@ -12,7 +12,7 @@ import club.c1sec.c1ctfplatform.services.*;
 import club.c1sec.c1ctfplatform.utils.RandomUtil;
 import club.c1sec.c1ctfplatform.utils.StringUtil;
 import club.c1sec.c1ctfplatform.vo.Response;
-import club.c1sec.c1ctfplatform.vo.User.*;
+import club.c1sec.c1ctfplatform.vo.user.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.validation.BindingResult;
@@ -48,7 +48,8 @@ public class UserController {
     MailRateLimiter mailRateLimiter;
 
     @PostMapping("/login")
-    public Response<LoginInfo> login(@RequestBody @Valid LoginRequest loginRequest, BindingResult bindingResult, HttpServletRequest httpServletRequest) {
+    public Response<LoginInfo> login(@RequestBody @Valid LoginRequest loginRequest,
+                                     BindingResult bindingResult, HttpServletRequest httpServletRequest) {
         Response<LoginInfo> response = new Response<>();
         if (bindingResult.hasErrors()) {
             response.invalid(bindingResult.getFieldError().getDefaultMessage());
@@ -69,11 +70,10 @@ public class UserController {
             userService.addUser(user);
             String token = jwtService.signToken(user.getUserId());
             response.success("登录成功", new LoginInfo(user.getUsername(), token, user.getUserRole() == UserRole.USER_ROLE_ADMIN));
-            return response;
         } else {
             response.invalid("用户名或者密码输入错误");
-            return response;
         }
+        return response;
     }
 
     @InterceptCheck(checkers = {RegisterOpenChecker.class})
@@ -146,7 +146,8 @@ public class UserController {
     }
 
     @PostMapping("/check_username")
-    public Response<String> checkUsername(@RequestBody @Valid CheckUsernameRequest checkUsernameRequest, BindingResult bindingResult) {
+    public Response<String> checkUsername(@RequestBody @Valid CheckUsernameRequest checkUsernameRequest,
+                                          BindingResult bindingResult) {
         Response<String> response = new Response<>();
         if (bindingResult.hasErrors()) {
             response.invalid(bindingResult.getFieldError().getDefaultMessage());
@@ -162,7 +163,8 @@ public class UserController {
     }
 
     @PostMapping("/send_verify_mail")
-    public Response<String> sendRegisterMail(@RequestBody @Valid SendRegisterMailRequest sendRegisterMailRequest, BindingResult bindingResult) {
+    public Response<String> sendRegisterMail(@RequestBody @Valid SendRegisterMailRequest sendRegisterMailRequest,
+                                             BindingResult bindingResult) {
         Response<String> response = new Response<>();
         if (bindingResult.hasErrors()) {
             response.invalid(bindingResult.getFieldError().getDefaultMessage());
@@ -186,7 +188,8 @@ public class UserController {
     }
 
     @PostMapping("/forget_password")
-    public Response<String> forgetPassword(@RequestBody @Valid ForgetPasswordRequest forgetPasswordRequest, BindingResult bindingResult) {
+    public Response<String> forgetPassword(@RequestBody @Valid ForgetPasswordRequest forgetPasswordRequest,
+                                           BindingResult bindingResult) {
         Response<String> response = new Response<>();
 
         if (bindingResult.hasErrors()) {
@@ -201,33 +204,29 @@ public class UserController {
 
         if (newPassword.length() < 5) {
             response.fail("密码太短, 请换一个更强的密码");
-            return response;
         } else {
             if (mailService.verifyRegisterMail(email, verifyCode)) {
                 User user = userService.getUserByEmail(email);
                 if (user != null && user.getUsername().equals(username)) {
                     mailService.discardEmailVerifyCode(email); // 删除 Redis 中的验证码
-
                     user.setLastLoginTime(new Date());
                     user.setPassword(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
                     userService.addUser(user);
-
                     response.success("重置成功");
-                    return response;
                 } else {
                     response.fail("用户名或邮箱错误");
-                    return response;
                 }
             } else {
                 response.fail("邮件验证码不正确");
-                return response;
             }
         }
+        return response;
     }
 
     @InterceptCheck(checkers = LoginChecker.class)
     @PostMapping("/change_password")
-    public Response<String> changePassword(@RequestBody @Valid ChangePasswordRequest changePasswordRequest, BindingResult bindingResult) {
+    public Response<String> changePassword(@RequestBody @Valid ChangePasswordRequest changePasswordRequest,
+                                           BindingResult bindingResult) {
         Response<String> response = new Response<>();
 
         if (bindingResult.hasErrors()) {

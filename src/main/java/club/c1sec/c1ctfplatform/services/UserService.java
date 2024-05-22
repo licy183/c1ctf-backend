@@ -2,7 +2,7 @@ package club.c1sec.c1ctfplatform.services;
 
 import club.c1sec.c1ctfplatform.dao.UserDao;
 import club.c1sec.c1ctfplatform.po.User;
-import club.c1sec.c1ctfplatform.vo.Ranking.RankingInfo;
+import club.c1sec.c1ctfplatform.vo.ranking.RankingInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

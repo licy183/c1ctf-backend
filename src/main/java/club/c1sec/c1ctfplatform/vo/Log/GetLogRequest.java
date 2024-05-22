@@ -1,4 +1,4 @@
-package club.c1sec.c1ctfplatform.vo.Log;
+package club.c1sec.c1ctfplatform.vo.log;
 
 import club.c1sec.c1ctfplatform.enums.LogEvent;
 import club.c1sec.c1ctfplatform.vo.PageListRequest;

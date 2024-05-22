@@ -1,4 +1,4 @@
-package club.c1sec.c1ctfplatform.vo.Submission;
+package club.c1sec.c1ctfplatform.vo.submission;
 
 import lombok.Data;
 

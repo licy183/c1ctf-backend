@@ -21,7 +21,7 @@ public enum UserRole {
 
     @JsonCreator
     static LogEvent fromId(int id) {
-        return Stream.of(LogEvent.values()).filter(userRole -> userRole.id == id).findFirst().get();
+        return Stream.of(LogEvent.values()).filter(userRole -> userRole.id == id).findFirst().orElse(null);
     }
 
     public static UserRole int2UserRole(Integer l) {

@@ -7,7 +7,7 @@ import club.c1sec.c1ctfplatform.interceptor.InterceptCheck;
 import club.c1sec.c1ctfplatform.po.*;
 import club.c1sec.c1ctfplatform.services.*;
 import club.c1sec.c1ctfplatform.utils.RandomUtil;
-import club.c1sec.c1ctfplatform.vo.Challenge.*;
+import club.c1sec.c1ctfplatform.vo.challenge.*;
 import club.c1sec.c1ctfplatform.vo.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
@@ -85,6 +85,7 @@ public class ChallengeController {
                 challengeDetail.setIntroduction(challenge.getIntroduction());
                 challengeDetail.setScore(challenge.getScore());
                 challengeDetail.setTitle(challenge.getTitle());
+                challengeDetail.setIsContainer(challenge.getIsContainer());
                 response.success("", challengeDetail);
             } else {
                 response.fail("请求的题目不存在");
@@ -148,6 +149,9 @@ public class ChallengeController {
             } else {
                 challenge.setScore(req.getScore());
             }
+        }
+        if (req.getIsContainer() != null) {
+            challenge.setIsContainer(req.getIsContainer());
         }
         challengeService.addChallenge(challenge);
         response.success("成功", challenge.getChallengeId());

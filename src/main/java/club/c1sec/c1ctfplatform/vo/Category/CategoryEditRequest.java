@@ -1,4 +1,4 @@
-package club.c1sec.c1ctfplatform.vo.Category;
+package club.c1sec.c1ctfplatform.vo.category;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

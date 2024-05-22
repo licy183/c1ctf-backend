@@ -22,7 +22,7 @@ public class JWTService {
     private UserService userService;
 
     /*
-     设置一个 key 为 time, value 为 当前时间 + 100, 数据库中报错为当前时间, 验证时需要验证 jwt 中的时间大于数据库时间,
+     设置一个 key 为 time, value 为 当前时间 + 100, 数据库中保存为当前时间, 验证时需要验证 jwt 中的时间大于数据库时间,
      将数据库时间往后调, 就能将 jwt 无效化, 相当于销毁.
      */
     public String signToken(Long userId) {

@@ -1,4 +1,5 @@
-package club.c1sec.c1ctfplatform.vo.Container;
+package club.c1sec.c1ctfplatform.vo.container;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -15,9 +16,7 @@ public class ContainerInfo {
     @JsonProperty("is_allocated")
     private Boolean isAllocated;
 
-    @JsonProperty("host")
-    private String host;
-
-    @JsonProperty("port")
-    private Integer port;
+    // 已经format的容器访问url如 nc xxx 1234 http://xxx:1234/xxx
+    @JsonProperty("url")
+    private String url;
 }

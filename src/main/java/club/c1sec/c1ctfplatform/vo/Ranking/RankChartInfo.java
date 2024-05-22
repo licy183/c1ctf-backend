@@ -1,4 +1,4 @@
-package club.c1sec.c1ctfplatform.vo.Ranking;
+package club.c1sec.c1ctfplatform.vo.ranking;
 
 import lombok.Data;
 

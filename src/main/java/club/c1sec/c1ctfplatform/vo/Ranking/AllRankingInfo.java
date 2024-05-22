@@ -1,4 +1,4 @@
-package club.c1sec.c1ctfplatform.vo.Ranking;
+package club.c1sec.c1ctfplatform.vo.ranking;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -13,8 +13,8 @@ import java.util.Map;
 @NoArgsConstructor
 public class AllRankingInfo {
     @JsonProperty("ranking")
-    List<RankingInfo> Ranking;
+    List<RankingInfo> ranking;
 
     @JsonProperty("reverse_ranking")
-    Map ReverseRanking;
+    Map<Long, Integer> reverseRanking;
 }

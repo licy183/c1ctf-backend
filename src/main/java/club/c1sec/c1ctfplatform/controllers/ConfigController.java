@@ -3,8 +3,8 @@ package club.c1sec.c1ctfplatform.controllers;
 import club.c1sec.c1ctfplatform.checkers.AdminChecker;
 import club.c1sec.c1ctfplatform.interceptor.InterceptCheck;
 import club.c1sec.c1ctfplatform.services.ConfigService;
-import club.c1sec.c1ctfplatform.vo.Config.ConfigEditRequest;
-import club.c1sec.c1ctfplatform.vo.Config.MatchInfo;
+import club.c1sec.c1ctfplatform.vo.config.ConfigEditRequest;
+import club.c1sec.c1ctfplatform.vo.config.MatchInfo;
 import club.c1sec.c1ctfplatform.vo.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -81,7 +81,6 @@ public class ConfigController {
         config.setRegisterOpen(registerOpen);
         config.setDynamicScoreBase(dynamicScoreBase);
         config.setDynamicScoreMin(dynamicScoreMin);
-        // todo:保存到数据库，从数据库读取
         config.setContainerCount(containerCount);
         config.setContainerFlagFormat(containerFlagFormat);
 
