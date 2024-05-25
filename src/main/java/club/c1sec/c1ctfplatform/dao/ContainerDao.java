@@ -21,4 +21,6 @@ public interface ContainerDao extends JpaRepository<Container, ContainerPK> {
     @Query("SELECT DISTINCT challengeId FROM Container WHERE userId = :userId and status <> club.c1sec.c1ctfplatform.enums.ContainerStatus.DELETED")
     List<Long> getAllChallengeIdNotDeleted(Long userId);
 
+    Container findContainerByFlag(String flag);
+
 }

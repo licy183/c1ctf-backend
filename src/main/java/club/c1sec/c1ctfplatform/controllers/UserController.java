@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/user")
@@ -47,6 +48,114 @@ public class UserController {
     @Autowired
     MailRateLimiter mailRateLimiter;
 
+    @Autowired
+    CasValidateService casValidateService;
+
+    @Autowired
+    BulletinService bulletinService;
+
+    @PostMapping("/cas_login")
+    public Response<CasLoginResult> casLogin(@RequestBody @Valid CasLoginRequest casLoginRequest,
+                                             BindingResult bindingResult, HttpServletRequest httpServletRequest) {
+        Response<CasLoginResult> response = new Response<>();
+        if (bindingResult.hasErrors()) {
+            response.invalid(bindingResult.getFieldError().getDefaultMessage());
+            return response;
+        }
+        // F**k the wrdvpn!
+        // 网瑞达的 WebVPN 并不会记录 X-Real-IP，也不会记录 X-Forward-For
+//        String ip = httpServletRequest.getHeader("x-real-ip");
+//        if (ip != null) {
+//            if (!loginRateLimiter.check(ip)) {
+//                response.invalid("登录过于频繁, 请稍等一会再试试");
+//                return response;
+//            }
+//        }
+        String ticket = casLoginRequest.getTicket();
+        Map.Entry<String, String> res = casValidateService.casTicketValidate(ticket);
+        if (res == null) {
+            response.fail("CAS 登录失败");
+            return response;
+        }
+        String stuId = res.getKey();
+        String name = res.getValue();
+        CasLoginResult result = new CasLoginResult();
+        result.setStudentId(stuId);
+        result.setStudentName(name);
+        // 在数据库中查找，判断是否需要注册
+        if (userService.isStudentIdExist(stuId)) {
+            // 设置登录时间
+            User user = userService.getUserByStuId(stuId);
+            user.setLastLoginTime(new Date());
+            userService.addUser(user);
+            // 不需要注册
+            result.setNeedRegister(false);
+            result.setToken(jwtService.signToken(userService.getUserByStuId(stuId).getUserId()));
+        } else {
+            // 需要注册
+            if (!casValidateService.isPreRegisterOpen()) {
+                response.fail("平台注册已经关闭");
+                return response;
+            }
+            result.setNeedRegister(true);
+            result.setUuid(casValidateService.casPreRegister(stuId, name));
+        }
+        response.success("", result);
+        return response;
+    }
+
+    @InterceptCheck(checkers = {RegisterOpenChecker.class})
+    @PostMapping("/cas_register")
+    public Response<?> casRegister(@RequestBody @Valid CasRegisterRequest casRegisterRequest,
+                                   BindingResult bindingResult) {
+        Response<Object> response = new Response<>();
+        if (bindingResult.hasErrors()) {
+            response.invalid(bindingResult.getFieldError().getDefaultMessage());
+            return response;
+        }
+        final String username = casRegisterRequest.getUsername();
+        final String email = casRegisterRequest.getEmail();
+        final String uuid = casRegisterRequest.getUuid();
+        if (userService.isUsernameExist(username)) {
+            response.fail("用户名已被注册");
+            return response;
+        }
+        if (userService.isEmailExist(email)) {
+            response.fail("该邮箱已被注册");
+            return response;
+        }
+        Map.Entry<String, String> idNamePair = casValidateService.getCasPreRegisterInfo(uuid);
+        if (idNamePair == null) {
+            response.fail("身份认证过期，请从比赛平台重新登录。");
+            return response;
+        }
+        final String stuId = idNamePair.getKey();
+        final String name = idNamePair.getValue();
+        if (userService.isStudentIdExist(stuId)) {
+            response.fail("你已经注册过了，请尝试使用 CAS 重新登录。");
+            return response;
+        }
+        String password = casRegisterRequest.getPassword();
+        if (password.length() < 5) {
+            response.fail("密码太短, 请换一个更强的密码");
+            return response;
+        }
+        User user = new User();
+        password = BCrypt.hashpw(password, BCrypt.gensalt());
+        user.setUsername(username);
+        user.setPassword(password);
+        user.setUserRole(UserRole.USER_ROLE_STUDENT);
+        user.setStudentId(stuId);
+        user.setStudentName(name);
+        user.setBanned(false);
+        user.setEmail(email);
+        user.setUserSeed(RandomUtil.getRandomPrime());
+        user.setLastLoginTime(new Date());
+        userService.addUser(user);
+        response.success("注册成功");
+        return response;
+    }
+
     @PostMapping("/login")
     public Response<LoginInfo> login(@RequestBody @Valid LoginRequest loginRequest,
                                      BindingResult bindingResult, HttpServletRequest httpServletRequest) {
@@ -69,7 +178,8 @@ public class UserController {
             user.setLastLoginTime(new Date());
             userService.addUser(user);
             String token = jwtService.signToken(user.getUserId());
-            response.success("登录成功", new LoginInfo(user.getUsername(), token, user.getUserRole() == UserRole.USER_ROLE_ADMIN));
+            response.success("登录成功",
+                    new LoginInfo(user.getUsername(), token, user.getUserRole() == UserRole.USER_ROLE_ADMIN));
         } else {
             response.invalid("用户名或者密码输入错误");
         }
@@ -78,10 +188,18 @@ public class UserController {
 
     @InterceptCheck(checkers = {RegisterOpenChecker.class})
     @PostMapping("/register")
-    public Response<String> register(@RequestBody @Valid RegisterRequest registerRequest, BindingResult bindingResult) {
+    public Response<String> register(@RequestBody @Valid RegisterRequest registerRequest,
+                                     BindingResult bindingResult) {
         Response<String> response = new Response<>();
         if (bindingResult.hasErrors()) {
             response.invalid(bindingResult.getFieldError().getDefaultMessage());
+            return response;
+        }
+        boolean isStudent = registerRequest.getIsStudent();
+
+        // 使用 CAS 登录时，不应该能够通过本接口注册成为学生
+        if (isStudent) {
+            response.fail("本校学生请使用CAS登录");
             return response;
         }
 
@@ -89,9 +207,6 @@ public class UserController {
         String password = registerRequest.getPassword();
         String email = registerRequest.getEmail();
         String verifyCode = registerRequest.getVerifyCode();
-        String studentId = registerRequest.getStudentId();
-        String studentName = registerRequest.getStudentName();
-        boolean isStudent = registerRequest.getIsStudent();
         UserRole userRole;
         User user = new User();
 
@@ -115,19 +230,9 @@ public class UserController {
             response.fail("email_error");
             return response;
         }
-        if (isStudent) {
-            if (studentId == null || !StringUtil.isStudentId(studentId) || userService.isStudentIdExist(studentId)) {
-                response.fail("student_id_error");
-                return response;
-            }
-            userRole = UserRole.USER_ROLE_STUDENT;
-            user.setStudentName(studentName);
-            user.setStudentId(studentId);
-        } else {
-            userRole = UserRole.USER_ROLE_PLAIN;
-            user.setStudentName(null);
-            user.setStudentId(null);
-        }
+        userRole = UserRole.USER_ROLE_PLAIN;
+        user.setStudentName(null);
+        user.setStudentId(null);
 
         mailService.discardEmailVerifyCode(email); // 删除 Redis 中的验证码
 
@@ -272,6 +377,7 @@ public class UserController {
         userInfo.setStudentName(currUser.getStudentName());
         userInfo.setUsername(currUser.getUsername());
         userInfo.setRank(rank);
+        userInfo.setHaveUnreadBulletin(bulletinService.haveUnreadBulletin(currUser.getUserId()));
 
         response.success("", userInfo);
         return response;

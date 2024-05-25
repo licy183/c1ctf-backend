@@ -45,7 +45,7 @@ public class Container {
     @JsonProperty("port")
     private Integer port;
 
-    @Column
+    @Column(unique = true)
     @JsonProperty("flag")
     private String flag;
 

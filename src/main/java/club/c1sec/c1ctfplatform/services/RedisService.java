@@ -15,6 +15,10 @@ public class RedisService {
         redis.opsForValue().set(key, value, time, TimeUnit.SECONDS);
     }
 
+    public void setKeyValue(String key, String value) {
+        redis.opsForValue().set(key, value);
+    }
+
     public Boolean isKeyExist(String key) {
         return redis.opsForValue().get(key) != null;
     }

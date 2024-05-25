@@ -1,14 +1,20 @@
 package club.c1sec.c1ctfplatform.controllers;
 
-import club.c1sec.c1ctfplatform.checkers.*;
+import club.c1sec.c1ctfplatform.checkers.AdminChecker;
+import club.c1sec.c1ctfplatform.checkers.LoginChecker;
+import club.c1sec.c1ctfplatform.checkers.MatchOpenChecker;
 import club.c1sec.c1ctfplatform.enums.ContainerStatus;
+import club.c1sec.c1ctfplatform.enums.LogEvent;
 import club.c1sec.c1ctfplatform.interceptor.InterceptCheck;
-import club.c1sec.c1ctfplatform.po.*;
+import club.c1sec.c1ctfplatform.po.Challenge;
+import club.c1sec.c1ctfplatform.po.Container;
+import club.c1sec.c1ctfplatform.po.ContaineredChallenge;
+import club.c1sec.c1ctfplatform.po.User;
 import club.c1sec.c1ctfplatform.services.*;
 import club.c1sec.c1ctfplatform.utils.FlagUtil;
+import club.c1sec.c1ctfplatform.vo.Response;
 import club.c1sec.c1ctfplatform.vo.challenge.ChallengeDetailRequest;
 import club.c1sec.c1ctfplatform.vo.container.*;
-import club.c1sec.c1ctfplatform.vo.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,9 +23,13 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @InterceptCheck(checkers = {LoginChecker.class})
@@ -27,15 +37,15 @@ import java.util.*;
 @RequestMapping("/api/container")
 public class ContainerController {
 
-    @Value("${container.create_url}")
+    @Value("${container.create-url}")
     public String createUrl;
-    @Value("${container.get_url}")
+    @Value("${container.get-url}")
     public String getUrl;
-    @Value("${container.renew_url}")
+    @Value("${container.renew-url}")
     public String renewUrl;
-    @Value("${container.delete_url}")
+    @Value("${container.delete-url}")
     public String deleteUrl;
-    @Value("${container.list_url}")
+    @Value("${container.list-url}")
     public String listUrl;
 
     @Autowired
@@ -48,6 +58,8 @@ public class ContainerController {
     ContainerService containerService;
     @Autowired
     HttpService httpService;
+    @Autowired
+    LogService logService;
 
     @InterceptCheck(checkers = {LoginChecker.class})
     @PostMapping("/get_container")
@@ -90,12 +102,14 @@ public class ContainerController {
                     httpService.sendGetRequest(getUrl + containerId, Collections.emptyMap(), GetContainerResp.class);
             ContainerStatus status = resp.getStatus();
             if (status.equals(ContainerStatus.PROCESS_ERROR)) {
+                logService.log(LogEvent.LOG_EVENT_CONTAINER_ERROR, "query", "process error",
+                        currUser.getUsername(), container.getEnvId().toString());
                 response.fail("获取容器状态失败，请联系管理员。");
                 return response;
             }
             container.setStatus(status);
             container.setHost(resp.getHost());
-            container.setPort(Integer.valueOf(resp.getPort()));
+            container.setPort(resp.getPort() == null ? null : Integer.valueOf(resp.getPort()));
             container.setExpire(resp.getExpire());
             containerService.saveContainer(container);
             info.setExpireTime(container.getExpire().toEpochMilli());
@@ -105,7 +119,11 @@ public class ContainerController {
                 info.setUrl(url.replace("%host%", container.getHost()).replace("%port%", container.getPort().toString()));
             }
             response.success("", info);
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_QUERY,
+                    currUser.getUsername(), container.getEnvId().toString());
         } catch (Exception e) {
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_ERROR, "query", "exception",
+                    currUser.getUsername(), container.getEnvId().toString());
             log.error("getContainer()", e);
             // 更新容器状态失败
             response.fail("获取容器状态失败，请联系管理员。");
@@ -127,6 +145,8 @@ public class ContainerController {
         /* 保证Challenge是使用容器的 */
         Challenge challenge = challengeService.getChallengeById(challengeId);
         if (!challenge.getIsContainer()) {
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_UNMATCHED_TYPE, "alloc",
+                    currUser.getUsername(), challenge.getTitle());
             response.invalid("该题目不是使用容器的题目");
             return response;
         }
@@ -134,6 +154,7 @@ public class ContainerController {
         Long count = containerService.countContainerByUserId(currUserId);
         int maxCount = configService.getContainerCount();
         if (count > maxCount) {
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_MAX, currUser.getUsername());
             response.fail("您已经申请了很多容器了，请先关闭几个再申请吧");
             return response;
         }
@@ -141,6 +162,8 @@ public class ContainerController {
         Container container = containerService.getContainerIdByPK(currUserId, challengeId);
         /* 如果数据库中没有，那就是没有申请。 */
         if (container != null && container.getStatus() != club.c1sec.c1ctfplatform.enums.ContainerStatus.DELETED) {
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_CREATE_REPEAT,
+                    currUser.getUsername(), challenge.getTitle());
             response.fail("您已申请过该题目的容器");
             return response;
         }
@@ -156,13 +179,20 @@ public class ContainerController {
             param.put("flag", flag = containeredChallenge.getFlag());
         } else {
             String flagTemplate = configService.getContainerFlagFormat();
-            param.put("flag", flag = FlagUtil.generatorFlag(flagTemplate));
+            do {
+                flag = FlagUtil.generateFlag(flagTemplate);
+            } while (challengeService.isInvalidFlag(flag));
+            param.put("flag", flag);
         }
+        param.put("expire", DateTimeFormatter.ISO_OFFSET_DATE_TIME.toFormat()
+                .format(ZonedDateTime.now().plus(1, ChronoUnit.HOURS)));
         /* 向管理端申请容器 */
         try {
             CreateContainerResp resp = httpService.sendPostRequest(createUrl, param, CreateContainerResp.class);
             ContainerStatus status = resp.getStatus();
             if (status.equals(ContainerStatus.PROCESS_ERROR)) {
+                logService.log(LogEvent.LOG_EVENT_CONTAINER_ERROR, "alloc", "process error",
+                        currUser.getUsername(), challenge.getTitle());
                 response.fail("申请容器失败");
                 return response;
             }
@@ -176,7 +206,11 @@ public class ContainerController {
             container.setFlag(flag);
             containerService.saveContainer(container);
             response.success("申请容器成功");
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_CREATE,
+                    currUser.getUsername(), challenge.getTitle(), container.getEnvId().toString());
         } catch (Exception e) {
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_ERROR, "alloc", "exception",
+                    currUser.getUsername(), challenge.getTitle());
             // 申请容器失败
             response.fail("申请容器失败");
             log.error("allocContainer()", e);
@@ -198,6 +232,8 @@ public class ContainerController {
         /* 保证 Challenge 是使用容器的 */
         Challenge challenge = challengeService.getChallengeById(challengeId);
         if (!challenge.getIsContainer()) {
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_UNMATCHED_TYPE, "renew",
+                    currUser.getUsername(), challenge.getTitle());
             response.invalid("该题目不是使用容器的题目");
             return response;
         }
@@ -205,6 +241,8 @@ public class ContainerController {
         Container container = containerService.getContainerIdByPK(currUserId, challengeId);
         /* 如果数据库中没有，那就是没有申请。 */
         if (container == null) {
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_INVALID, "renew",
+                    currUser.getUsername(), challenge.getTitle());
             response.fail("您未申请过该题目的容器");
             return response;
         }
@@ -212,17 +250,21 @@ public class ContainerController {
         Long envId = container.getEnvId();
         Map<String, Object> param = new HashMap<>();
         param.put("expire", DateTimeFormatter.ISO_OFFSET_DATE_TIME.toFormat()
-                .format(Instant.now().plus(1, ChronoUnit.HOURS)));
+                .format(ZonedDateTime.now().plus(1, ChronoUnit.HOURS)));
         try {
             RenewContainerResp resp =
                     httpService.sendPostRequest(renewUrl + envId, param, RenewContainerResp.class);
             ContainerStatus status = resp.getStatus();
             if (status.equals(ContainerStatus.PROCESS_ERROR)) {
+                logService.log(LogEvent.LOG_EVENT_CONTAINER_ERROR, "renew", "process error",
+                        currUser.getUsername(), challenge.getTitle());
                 response.fail("续期环境失败");
                 return response;
             }
             Instant expire = resp.getExpire();
             if (expire == null) {
+                logService.log(LogEvent.LOG_EVENT_CONTAINER_ERROR, "renew", "invalid expire",
+                        currUser.getUsername(), challenge.getTitle());
                 response.fail("续期环境失败");
                 return response;
             }
@@ -230,7 +272,11 @@ public class ContainerController {
             container.setExpire(expire);
             containerService.saveContainer(container);
             response.success("续期容器成功");
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_RENEW,
+                    currUser.getUsername(), challenge.getTitle(), container.getEnvId().toString());
         } catch (Exception e) {
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_ERROR, "renew", "exception",
+                    currUser.getUsername(), challenge.getTitle());
             // 续期容器失败
             response.fail("续期容器失败");
             log.error("renewContainer()", e);
@@ -252,6 +298,8 @@ public class ContainerController {
         /* 保证Challenge是使用容器的 */
         Challenge challenge = challengeService.getChallengeById(challengeId);
         if (!challenge.getIsContainer()) {
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_UNMATCHED_TYPE, "free",
+                    currUser.getUsername(), challenge.getTitle());
             response.invalid("该题目不是使用容器的题目");
             return response;
         }
@@ -259,6 +307,8 @@ public class ContainerController {
         Container container = containerService.getContainerIdByPK(currUserId, challengeId);
         /* 如果数据库中没有，那就是没有申请。 */
         if (container == null) {
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_INVALID, "free",
+                    currUser.getUsername(), challenge.getTitle());
             response.fail("您未申请过该题目的容器");
             return response;
         }
@@ -269,14 +319,20 @@ public class ContainerController {
                     httpService.sendGetRequest(deleteUrl + envId, Collections.emptyMap(), DeleteContainerResp.class);
             ContainerStatus status = resp.getStatus();
             if (status.equals(ContainerStatus.DELETED)) {
+                logService.log(LogEvent.LOG_EVENT_CONTAINER_DELETE,
+                        currUser.getUsername(), challenge.getTitle(), container.getEnvId().toString());
                 /* 更新数据库 */
                 container.setStatus(club.c1sec.c1ctfplatform.enums.ContainerStatus.DELETED);
                 containerService.saveContainer(container);
                 response.success("回收容器成功");
                 return response;
             }
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_ERROR, "free", "process error",
+                    currUser.getUsername(), challenge.getTitle());
             response.fail("回收容器失败");
         } catch (Exception e) {
+            logService.log(LogEvent.LOG_EVENT_CONTAINER_ERROR, "free", "exception",
+                    currUser.getUsername(), challenge.getTitle());
             // 回收容器失败
             response.fail("回收容器失败");
             log.error("freeContainer()", e);

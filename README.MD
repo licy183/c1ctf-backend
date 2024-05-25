@@ -17,6 +17,8 @@ spring:
 
 注意修改redis、mysql和邮箱配置
 
+**注意每次部署修改jwt.secret-key否则可能因为以前平台签发的票据导致越权！！！**
+
 ## 编译
 ```
 mvn package
@@ -34,4 +36,20 @@ http://tomcat-ip:default-port-8080/c1ctfplatform/api
 
 ```
 http://tomcat-ip:default-port-8080/c1ctfplatform/api/config/get_match_info
+```
+
+## nginx 参考配置
+
+```
+        location /c1ctf/api/ {
+                proxy_pass http://192.168.100.10:8180/c1ctf/api/;
+                include /etc/nginx/proxy_params;
+        }
+
+        location = /cas/login {
+                proxy_pass http://192.168.100.10:3002/cas_login.html;
+                proxy_redirect http://192.168.100.10/ /;
+                include /etc/nginx/proxy_params;
+        }
+
 ```

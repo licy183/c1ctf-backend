@@ -3,6 +3,8 @@ package club.c1sec.c1ctfplatform.controllers;
 import club.c1sec.c1ctfplatform.checkers.AdminChecker;
 import club.c1sec.c1ctfplatform.interceptor.InterceptCheck;
 import club.c1sec.c1ctfplatform.po.Bulletin;
+import club.c1sec.c1ctfplatform.po.User;
+import club.c1sec.c1ctfplatform.services.AuthService;
 import club.c1sec.c1ctfplatform.services.BulletinService;
 import club.c1sec.c1ctfplatform.vo.bulletin.BulletinDeleteRequest;
 import club.c1sec.c1ctfplatform.vo.bulletin.BulletinEditRequest;
@@ -19,11 +21,17 @@ import java.util.List;
 @RequestMapping("/api/bulletin")
 public class BulletinController {
     @Autowired
+    AuthService authService;
+    @Autowired
     BulletinService bulletinService;
 
     @GetMapping("/get_all_bulletin")
     public Response<List<Bulletin>> getAllBulletin() {
         Response<List<Bulletin>> response = new Response<>();
+        User currUser = authService.getCurrUser();
+        if (currUser != null) {
+            bulletinService.setLastReadTime(currUser.getUserId());
+        }
         response.success("", bulletinService.findAll());
         return response;
     }

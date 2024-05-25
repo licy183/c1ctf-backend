@@ -45,6 +45,10 @@ public class UserService {
         return this.userDao.findUserByEmail(email);
     }
 
+    public User getUserByStuId(String stuId) {
+        return this.userDao.findUserByStudentId(stuId);
+    }
+
     public void banUser(Long userId) {
         User user = this.getUserByUserId(userId);
         user.setBanned(true);

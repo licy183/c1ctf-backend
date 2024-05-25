@@ -1,6 +1,7 @@
 package club.c1sec.c1ctfplatform.services;
 
 import club.c1sec.c1ctfplatform.dao.ContainerDao;
+import club.c1sec.c1ctfplatform.dao.ContaineredChallengeDao;
 import club.c1sec.c1ctfplatform.po.Container;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,10 @@ public class ContainerService {
 
     public void saveContainer(Container container) {
         containerDao.save(container);
+    }
+
+    public Container getContainerByFlag(String flag) {
+        return containerDao.findContainerByFlag(flag);
     }
 
 }

@@ -25,6 +25,10 @@ spring:
           starttls: # 使用 SSL 安全协议，必须配置如下
             enable: true
             required: true
+        smtps:
+          socks:
+            host: 127.0.0.1
+            port: 8888
     port: 465  # 端口
     protocol: smtps # 协议
 
@@ -48,14 +52,18 @@ jwt:
   secret-key: 7e44b756a607d4b6646a429119360ab12aee1b4e
 
 container:
-  create_url: http://test-container.c1sec.club:5001/env/create
-  get_url: http://test-container.c1sec.club:5001/env/get/
-  renew_url: http://test-container.c1sec.club:5001/env/renew/
-  delete_url: http://test-container.c1sec.club:5001/env/delete/
-  list_url: http://test-container.c1sec.club:5001/env/list
+  create-url: http://test-container.c1sec.club:5001/env/create
+  get-url: http://test-container.c1sec.club:5001/env/get/
+  renew-url: http://test-container.c1sec.club:5001/env/renew/
+  delete-url: http://test-container.c1sec.club:5001/env/delete/
+  list-url: http://test-container.c1sec.club:5001/env/list
+  proxy-enabled: true
+  proxy-host: 127.0.0.1
+  proxy-port: 8888
 
-  proxy_host: 127.0.0.1
-  proxy_port: 8888
+oauth:
+  validate-url: https://cas-test.c1sec.club/cas/p3/serviceValidate?format={format}&ticket={ticket}&service={service}
+  redirect-url: https://c1ctf.c1sec.club/cas/login
 
 ---
 server:
@@ -109,11 +117,15 @@ jwt:
   secret-key: e9fea7cca05a41c8b88da79f0d9ca3d7db39785e
 
 container:
-  create_url: http://192.168.100.10:5001/env/create
-  get_url: http://192.168.100.10:5001/env/get/
-  renew_url: http://192.168.100.10:5001/env/renew/
-  delete_url: http://192.168.100.10:5001/env/delete/
-  list_url: http://192.168.100.10:5001/env/list
+  create-url: http://192.168.100.10:5001/env/create
+  get-url: http://192.168.100.10:5001/env/get/
+  renew-url: http://192.168.100.10:5001/env/renew/
+  delete-url: http://192.168.100.10:5001/env/delete/
+  list-url: http://192.168.100.10:5001/env/list
+  proxy-enabled: true
+  proxy-host: 192.168.100.10
+  proxy-port: 8888
 
-  proxy_host: 192.168.100.10
-  proxy_port: 8888
+oauth:
+  validate-url: https://cas-test.c1sec.club/cas/p3/serviceValidate?format={format}&ticket={ticket}&service={service}
+  redirect-url: https://c1ctf.c1sec.club/cas/login

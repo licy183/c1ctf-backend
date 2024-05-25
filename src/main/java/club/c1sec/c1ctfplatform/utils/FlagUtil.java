@@ -6,8 +6,8 @@ import java.util.UUID;
 
 @UtilityClass
 public class FlagUtil {
-    public static String generatorFlag(String flagTemplate) {
+    public static String generateFlag(String flagTemplate) {
         String prefix = flagTemplate.substring(0, flagTemplate.length() - 2);
-        return prefix + "{" + UUID.randomUUID().toString() + "}";
+        return prefix + "{" + UUID.randomUUID() + "}";
     }
 }

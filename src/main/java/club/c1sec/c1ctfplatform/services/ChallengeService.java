@@ -67,6 +67,10 @@ public class ChallengeService {
         containeredChallengeDao.save(containeredChallenge);
     }
 
+    public boolean isInvalidFlag(String flag) {
+        return containeredChallengeDao.existsByFlag(flag);
+    }
+
     public Challenge getContaineredChallengeInfoByFlagAndUser(String flag, Long userId) {
         return challengeDao.findContaineredChallengeInfoByFlagAndUser(flag, userId);
     }

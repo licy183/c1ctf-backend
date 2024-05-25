@@ -24,4 +24,7 @@ public class UserInfo {
     private Boolean banned;
 
     private Integer rank;
+
+    @JsonProperty("have_unread_bulletin")
+    private Boolean haveUnreadBulletin;
 }

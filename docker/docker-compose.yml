@@ -1,0 +1,33 @@
+version: "3.2"
+
+services:
+  redis-db:
+    container_name: redis-db
+    image: redis
+    restart: always
+  mysql-db:
+    container_name: mysql-db
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    volumes:
+      - type: bind
+        source: ./db
+        target: /docker-entrypoint-initdb.d
+    environment:
+       MYSQL_ROOT_PASSWORD: thisisapassword
+    ports:
+       - 3366:3306
+
+  c1ctf:
+    image: tomcat:jdk11-corretto
+    container_name: c1ctf
+    depends_on:
+      - mysql-db
+      - redis-db
+    volumes:
+      - type: bind
+        source: ./webapps
+        target: /usr/local/tomcat/webapps
+    ports:
+       - 8180:8080

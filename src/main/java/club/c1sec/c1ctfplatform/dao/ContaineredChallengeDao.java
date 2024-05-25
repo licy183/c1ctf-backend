@@ -8,4 +8,6 @@ public interface ContaineredChallengeDao extends JpaRepository<ContaineredChalle
 
     ContaineredChallenge findContaineredChallengeByChallengeId(Long challengeId);
 
+    Boolean existsByFlag(String flag);
+
 }

@@ -6,9 +6,7 @@ import club.c1sec.c1ctfplatform.checkers.MatchOpenChecker;
 import club.c1sec.c1ctfplatform.enums.LogEvent;
 import club.c1sec.c1ctfplatform.interceptor.InterceptCheck;
 import club.c1sec.c1ctfplatform.limiter.SubmitRateLimiter;
-import club.c1sec.c1ctfplatform.po.Challenge;
-import club.c1sec.c1ctfplatform.po.Submission;
-import club.c1sec.c1ctfplatform.po.User;
+import club.c1sec.c1ctfplatform.po.*;
 import club.c1sec.c1ctfplatform.services.*;
 import club.c1sec.c1ctfplatform.vo.attachment.AttachmentChallengeInfo;
 import club.c1sec.c1ctfplatform.vo.Response;
@@ -22,8 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @InterceptCheck(checkers = LoginChecker.class)
 @RestController
@@ -37,6 +38,9 @@ public class SubmissionController {
 
     @Autowired
     ChallengeService challengeService;
+
+    @Autowired
+    ContainerService containerService;
 
     @Autowired
     AuthService authService;
@@ -98,25 +102,38 @@ public class SubmissionController {
                 }
             }
         } else {
-            // 要么是容器题目，要么提交错误
-            Challenge chall = challengeService.getContaineredChallengeInfoByFlagAndUser(flag, currentUser.getUserId());
-            if (chall != null && chall.getIsOpen()) {
-                if (!submissionService.isSubmissionExist(chall.getChallengeId(), currentUser.getUserId())) {
-                    Submission submission = new Submission();
-                    submission.setChallengeId(chall.getChallengeId());
-                    submission.setSubmitTime(new Date());
-                    submission.setSubmitUserId(currentUser.getUserId());
-                    submissionService.addSubmission(submission);
-                    response.success("提交成功", chall.getChallengeId());
-                    rankingService.refreshOneDynamicScore(chall.getChallengeId()); // 刷新这个题目的动态分数 & 解题人数
-                    logService.log(LogEvent.LOG_EVENT_SUBMIT_SUCCESS, currentUser.getUsername(), flag, chall.getChallengeId().toString());
-                } else {
-                    response.fail("你已经提交过该flag了");
-                    logService.log(LogEvent.LOG_EVENT_SUBMIT_REPEAT, currentUser.getUsername(), flag, chall.getChallengeId().toString());
-                }
-            } else {
+            Container container = containerService.getContainerByFlag(flag);
+            // 找不到 flag 对应的容器，视作无效提交
+            if (container == null) {
                 response.fail("无效flag");
                 logService.log(LogEvent.LOG_EVENT_SUBMIT_ERROR, currentUser.getUsername(), flag);
+                return response;
+            } else {
+                if (!container.getUserId().equals(currentUser.getUserId())) {
+                    response.fail("无效flag");
+                    logService.log(LogEvent.LOG_EVENT_SUBMIT_REPEAT_OTHER_USER, currentUser.getUsername(), flag,
+                            container.getUserId().toString());
+                    return response;
+                }
+                Challenge chall = challengeService.getChallengeById(container.getChallengeId());
+                if (chall != null && chall.getIsOpen()) {
+                    if (!submissionService.isSubmissionExist(chall.getChallengeId(), currentUser.getUserId())) {
+                        Submission submission = new Submission();
+                        submission.setChallengeId(chall.getChallengeId());
+                        submission.setSubmitTime(new Date());
+                        submission.setSubmitUserId(currentUser.getUserId());
+                        submissionService.addSubmission(submission);
+                        response.success("提交成功", chall.getChallengeId());
+                        rankingService.refreshOneDynamicScore(chall.getChallengeId()); // 刷新这个题目的动态分数 & 解题人数
+                        logService.log(LogEvent.LOG_EVENT_SUBMIT_SUCCESS, currentUser.getUsername(), flag, chall.getChallengeId().toString());
+                    } else {
+                        response.fail("你已经提交过该flag了");
+                        logService.log(LogEvent.LOG_EVENT_SUBMIT_REPEAT, currentUser.getUsername(), flag, chall.getChallengeId().toString());
+                    }
+                } else {
+                    response.fail("无效flag");
+                    logService.log(LogEvent.LOG_EVENT_SUBMIT_ERROR, currentUser.getUsername(), flag);
+                }
             }
         }
         return response;
