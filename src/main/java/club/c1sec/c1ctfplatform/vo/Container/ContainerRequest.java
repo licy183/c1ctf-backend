@@ -11,4 +11,3 @@ public class ContainerRequest {
     @JsonProperty("challenge_id")
     private Long challengeId;
 }
-

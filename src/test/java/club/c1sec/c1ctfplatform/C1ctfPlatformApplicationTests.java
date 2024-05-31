@@ -13,4 +13,3 @@ public class C1ctfPlatformApplicationTests {
     public void contextLoads() {
     }
 }
-

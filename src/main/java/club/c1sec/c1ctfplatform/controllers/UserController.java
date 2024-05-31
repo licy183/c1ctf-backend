@@ -54,6 +54,9 @@ public class UserController {
     @Autowired
     BulletinService bulletinService;
 
+    @Autowired
+    ConfigService configService;
+
     @PostMapping("/cas_login")
     public Response<CasLoginResult> casLogin(@RequestBody @Valid CasLoginRequest casLoginRequest,
                                              BindingResult bindingResult, HttpServletRequest httpServletRequest) {
@@ -64,13 +67,16 @@ public class UserController {
         }
         // F**k the wrdvpn!
         // 网瑞达的 WebVPN 并不会记录 X-Real-IP，也不会记录 X-Forward-For
-//        String ip = httpServletRequest.getHeader("x-real-ip");
-//        if (ip != null) {
-//            if (!loginRateLimiter.check(ip)) {
-//                response.invalid("登录过于频繁, 请稍等一会再试试");
-//                return response;
-//            }
-//        }
+        if (configService.getLoginLimit()) {
+            String ip = httpServletRequest.getHeader("x-real-ip");
+            if (ip != null) {
+                if (!loginRateLimiter.check(ip)) {
+                    response.invalid("登录过于频繁, 请稍等一会再试试");
+                    return response;
+                }
+            }
+        }
+
         String ticket = casLoginRequest.getTicket();
         Map.Entry<String, String> res = casValidateService.casTicketValidate(ticket);
         if (res == null) {
@@ -93,7 +99,7 @@ public class UserController {
             result.setToken(jwtService.signToken(userService.getUserByStuId(stuId).getUserId()));
         } else {
             // 需要注册
-            if (!casValidateService.isPreRegisterOpen()) {
+            if (!configService.getRegisterOpen()) {
                 response.fail("平台注册已经关闭");
                 return response;
             }
@@ -165,11 +171,13 @@ public class UserController {
             return response;
         }
 
-        String ip = httpServletRequest.getHeader("x-real-ip");
-        if (ip != null) {
-            if (!loginRateLimiter.check(ip)) {
-                response.invalid("登录过于频繁, 请稍等一会再试试");
-                return response;
+        if (configService.getLoginLimit()) {
+            String ip = httpServletRequest.getHeader("x-real-ip");
+            if (ip != null) {
+                if (!loginRateLimiter.check(ip)) {
+                    response.invalid("登录过于频繁, 请稍等一会再试试");
+                    return response;
+                }
             }
         }
 

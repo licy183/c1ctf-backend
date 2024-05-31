@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.time.Instant;
+import java.util.Date;
 
 @Service
 @DependsOn({"configDao"})
@@ -35,6 +36,9 @@ public class ConfigService {
 
     private final String containerFlagFormatKey = "container_flag_format";
     private String containerFlagFormat;
+
+    private final String loginLimitKey = "login_limit";
+    private boolean loginLimit;
 
     @PostConstruct
     public void initConfigService() {
@@ -69,6 +73,22 @@ public class ConfigService {
         return this.containerFlagFormat;
     }
 
+    public boolean getLoginLimit() {
+        return this.loginLimit;
+    }
+
+    public boolean getMatchStarted() {
+        Date currDate = new Date();
+        Date openDate = Date.from(getMatchOpenTime());
+        return currDate.after(openDate);
+    }
+
+    public boolean getMatchOpen() {
+        Date currDate = new Date();
+        Date openDate = Date.from(getMatchOpenTime());
+        Date endDate = Date.from(getMatchEndTime());
+        return currDate.before(endDate) && currDate.after(openDate);
+    }
 
     public void setDynamicScoreBase(int value) {
         Config config = new Config();
@@ -115,6 +135,13 @@ public class ConfigService {
     public void setRegisterOpen(boolean value) {
         Config config = new Config();
         config.setKey(registerOpenKey);
+        config.setValue(Boolean.toString(value));
+        configDao.save(config);
+    }
+
+    public void setLoginLimit(boolean value) {
+        Config config = new Config();
+        config.setKey(loginLimitKey);
         config.setValue(Boolean.toString(value));
         configDao.save(config);
     }
@@ -183,6 +210,15 @@ public class ConfigService {
         }
     }
 
+    public void refreshLoginLimit() {
+        try {
+            Config config = configDao.findConfigByKey(loginLimitKey);
+            this.loginLimit = Boolean.parseBoolean(config.getValue());
+        } catch (Exception e) {
+            this.loginLimit = false;
+        }
+    }
+
     public void refreshConfig() {
         this.refreshDynamicScoreBase();
         this.refreshDynamicScoreMin();
@@ -191,6 +227,6 @@ public class ConfigService {
         this.refreshRegisterOpen();
         this.refreshContainerCount();
         this.refreshContainerFlagFormat();
-
+        this.refreshLoginLimit();
     }
 }

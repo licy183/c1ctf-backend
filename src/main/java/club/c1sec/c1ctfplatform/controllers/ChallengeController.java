@@ -3,6 +3,7 @@ package club.c1sec.c1ctfplatform.controllers;
 import club.c1sec.c1ctfplatform.checkers.AdminChecker;
 import club.c1sec.c1ctfplatform.checkers.LoginChecker;
 import club.c1sec.c1ctfplatform.checkers.MatchStartedChecker;
+import club.c1sec.c1ctfplatform.enums.LogEvent;
 import club.c1sec.c1ctfplatform.interceptor.InterceptCheck;
 import club.c1sec.c1ctfplatform.po.*;
 import club.c1sec.c1ctfplatform.services.*;
@@ -37,6 +38,9 @@ public class ChallengeController {
 
     @Autowired
     SubmissionService submissionService;
+
+    @Autowired
+    LogService logService;
 
     @InterceptCheck(checkers = {MatchStartedChecker.class})
     @GetMapping("/get_open_challenge")
@@ -86,6 +90,7 @@ public class ChallengeController {
                 challengeDetail.setScore(challenge.getScore());
                 challengeDetail.setTitle(challenge.getTitle());
                 challengeDetail.setIsContainer(challenge.getIsContainer());
+                logService.log(LogEvent.LOG_EVENT_GET_CHALLENGE_DETAIL, user.getUsername());
                 response.success("", challengeDetail);
             } else {
                 response.fail("请求的题目不存在");

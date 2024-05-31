@@ -1,6 +1,5 @@
 package club.c1sec.c1ctfplatform.services;
 
-import club.c1sec.c1ctfplatform.checkers.MatchOpenChecker;
 import club.c1sec.c1ctfplatform.enums.UserRole;
 import club.c1sec.c1ctfplatform.po.Challenge;
 import club.c1sec.c1ctfplatform.po.Submission;
@@ -25,9 +24,6 @@ public class RankingService {
 
     @Autowired
     SubmissionService submissionService;
-
-    @Autowired
-    MatchOpenChecker matchOpenChecker;
 
     @Autowired
     ConfigService configService;
@@ -94,7 +90,7 @@ public class RankingService {
 
     @Scheduled(fixedRate = 30000) // 30 秒刷新一次
     public void autoRefreshRanking() {
-        if (!matchOpenChecker.check(null, null) && initialized) {
+        if (!configService.getMatchOpen() && initialized) {
             return; // 比赛没开始, 不排序
         }
         initialized = true;

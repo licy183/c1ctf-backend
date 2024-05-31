@@ -58,6 +58,9 @@ public class ConfigController {
         if (in.getContainerFlagFormat() != null) {
             configService.setContainerFlagFormat(in.getContainerFlagFormat());
         }
+        if (in.getLoginLimit() != null) {
+            configService.setLoginLimit(in.getLoginLimit());
+        }
         configService.refreshConfig();
         Response<String> response = new Response<>();
         response.success("修改成功");
@@ -74,6 +77,7 @@ public class ConfigController {
         Integer dynamicScoreMin = configService.getDynamicScoreMin();
         Integer containerCount = configService.getContainerCount();
         String containerFlagFormat = configService.getContainerFlagFormat();
+        boolean loginLimit = configService.getLoginLimit();
 
         ConfigEditRequest config = new ConfigEditRequest();
         config.setOpenTime(matchOpenTime);
@@ -83,6 +87,7 @@ public class ConfigController {
         config.setDynamicScoreMin(dynamicScoreMin);
         config.setContainerCount(containerCount);
         config.setContainerFlagFormat(containerFlagFormat);
+        config.setLoginLimit(loginLimit);
 
         Response<ConfigEditRequest> response = new Response<>();
         response.success("", config);

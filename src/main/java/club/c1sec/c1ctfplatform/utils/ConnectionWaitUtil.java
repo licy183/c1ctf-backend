@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
+import java.util.Objects;
 import java.util.Properties;
 
 @UtilityClass
@@ -17,13 +18,14 @@ public class ConnectionWaitUtil {
         YamlPropertiesFactoryBean yamlFactory = new YamlPropertiesFactoryBean();
         yamlFactory.setResources(new ClassPathResource("application.yml"));
         Properties props = yamlFactory.getObject();
+        assert props != null;
         String profile = props.getProperty("spring.profiles.active");
 
         yamlFactory.setDocumentMatchers(new YamlProcessor.DocumentMatcher() {
             @Override
             public YamlProcessor.MatchStatus matches(Properties properties) {
                 String name = properties.getProperty("spring.config.activate.on-profile");
-                if (profile.equals(name)) {
+                if (Objects.equals(profile, name)) {
                     return YamlProcessor.MatchStatus.FOUND;
                 } else {
                     return YamlProcessor.MatchStatus.NOT_FOUND;
@@ -52,6 +54,7 @@ public class ConnectionWaitUtil {
             String host = uri.getHost();
             if (host == null) {
                 System.out.println("Host is null, please verify your domain.");
+                throw new IllegalArgumentException("Host cannot be null.");
             }
             int port = uri.getPort();
             boolean success = false;

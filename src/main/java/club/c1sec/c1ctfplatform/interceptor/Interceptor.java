@@ -1,6 +1,7 @@
 package club.c1sec.c1ctfplatform.interceptor;
 
 import club.c1sec.c1ctfplatform.checkers.BasicChecker;
+import club.c1sec.c1ctfplatform.exception.CheckFailException;
 import club.c1sec.c1ctfplatform.po.User;
 import club.c1sec.c1ctfplatform.services.AuthService;
 import club.c1sec.c1ctfplatform.services.JWTService;

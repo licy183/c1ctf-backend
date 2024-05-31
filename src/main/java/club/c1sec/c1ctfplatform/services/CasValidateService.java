@@ -20,9 +20,7 @@ public class CasValidateService {
 
     private final RedisService redisService;
 
-    private final HttpService httpService;
-
-    private final ConfigService config;
+    private final CasHttpService casHttpService;
 
     private final String casServerUrl;
 
@@ -32,19 +30,17 @@ public class CasValidateService {
     public CasValidateService(@Value("${oauth.validate-url}") String casServerUrl,
                               @Value("${oauth.redirect-url}") String casRedirectUrl,
                               RedisService redisService,
-                              HttpService httpService,
-                              ConfigService config) {
+                              CasHttpService casHttpService) {
         this.redisService = redisService;
-        this.httpService = httpService;
+        this.casHttpService = casHttpService;
         this.casServerUrl = casServerUrl;
         this.encodedCasRedirectUrl = casRedirectUrl;
-        this.config = config;
     }
 
     public Map.Entry<String, String> casTicketValidate(String ticket) {
         try {
             _CasValidateResult result =
-                    httpService.sendGetRequest(casServerUrl, _createTicketValidateForm(ticket), _CasValidateResult.class);
+                    casHttpService.sendGetRequest(casServerUrl, _createTicketValidateForm(ticket), _CasValidateResult.class);
             _ServiceResponse response = result.getServiceResponse();
             if (response.getAuthenticationFailure() != null) {
                 log.error("casTicketValidate: ticket {} not valid: {}", ticket, response.getAuthenticationFailure());
@@ -57,10 +53,6 @@ public class CasValidateService {
             log.error("casTicketValidate: ticket {} not valid", ticket, e);
             return null;
         }
-    }
-
-    public boolean isPreRegisterOpen() {
-        return config.getRegisterOpen();
     }
 
     public String casPreRegister(String stuId, String name) {

@@ -103,4 +103,3 @@ public class RankingController {
         return response;
     }
 }
-

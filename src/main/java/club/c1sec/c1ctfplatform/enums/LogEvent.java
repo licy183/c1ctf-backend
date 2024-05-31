@@ -21,7 +21,8 @@ public enum LogEvent {
     LOG_EVENT_CONTAINER_UNMATCHED_TYPE(12),            // 操作不需要申请容器的题目
     LOG_EVENT_CONTAINER_INVALID(13),                   // 操作没有申请过的容器
     LOG_EVENT_CONTAINER_ERROR(14),                     // 容器处理过程中出错
-    LOG_EVENT_CONTAINER_QUERY(15);                     // 查询容器信息
+    LOG_EVENT_CONTAINER_QUERY(15),                     // 查询容器信息
+    LOG_EVENT_GET_CHALLENGE_DETAIL(16);                // 获取题目详情
 
     int id;
 
@@ -76,6 +77,8 @@ public enum LogEvent {
                 return LOG_EVENT_CONTAINER_ERROR;
             case 15:
                 return LOG_EVENT_CONTAINER_QUERY;
+            case 16:
+                return LOG_EVENT_GET_CHALLENGE_DETAIL;
             default:
                 return null;
         }

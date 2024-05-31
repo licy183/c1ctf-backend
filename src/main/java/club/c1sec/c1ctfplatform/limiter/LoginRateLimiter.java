@@ -1,6 +1,7 @@
 package club.c1sec.c1ctfplatform.limiter;
 
 import club.c1sec.c1ctfplatform.enums.LogEvent;
+import club.c1sec.c1ctfplatform.services.ConfigService;
 import club.c1sec.c1ctfplatform.services.LogService;
 import club.c1sec.c1ctfplatform.services.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;

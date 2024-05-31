@@ -1,6 +1,7 @@
 package club.c1sec.c1ctfplatform.controllers;
 
 import club.c1sec.c1ctfplatform.checkers.AdminChecker;
+import club.c1sec.c1ctfplatform.checkers.ContainerConcurrentChecker;
 import club.c1sec.c1ctfplatform.checkers.LoginChecker;
 import club.c1sec.c1ctfplatform.checkers.MatchOpenChecker;
 import club.c1sec.c1ctfplatform.enums.ContainerStatus;
@@ -57,7 +58,7 @@ public class ContainerController {
     @Autowired
     ContainerService containerService;
     @Autowired
-    HttpService httpService;
+    ContainerHttpService containerHttpService;
     @Autowired
     LogService logService;
 
@@ -99,7 +100,7 @@ public class ContainerController {
         /* 向管理端更新状态 */
         try {
             GetContainerResp resp =
-                    httpService.sendGetRequest(getUrl + containerId, Collections.emptyMap(), GetContainerResp.class);
+                    containerHttpService.sendGetRequest(getUrl + containerId, Collections.emptyMap(), GetContainerResp.class);
             ContainerStatus status = resp.getStatus();
             if (status.equals(ContainerStatus.PROCESS_ERROR)) {
                 logService.log(LogEvent.LOG_EVENT_CONTAINER_ERROR, "query", "process error",
@@ -131,7 +132,7 @@ public class ContainerController {
         return response;
     }
 
-    @InterceptCheck(checkers = {MatchOpenChecker.class, LoginChecker.class})
+    @InterceptCheck(checkers = {MatchOpenChecker.class, LoginChecker.class, ContainerConcurrentChecker.class})
     @PostMapping("/alloc_container")
     public Response<String> allocContainer(@RequestBody @Valid ContainerRequest req, BindingResult bindingResult) {
         Response<String> response = new Response<>();
@@ -188,7 +189,7 @@ public class ContainerController {
                 .format(ZonedDateTime.now().plus(1, ChronoUnit.HOURS)));
         /* 向管理端申请容器 */
         try {
-            CreateContainerResp resp = httpService.sendPostRequest(createUrl, param, CreateContainerResp.class);
+            CreateContainerResp resp = containerHttpService.sendPostRequest(createUrl, param, CreateContainerResp.class);
             ContainerStatus status = resp.getStatus();
             if (status.equals(ContainerStatus.PROCESS_ERROR)) {
                 logService.log(LogEvent.LOG_EVENT_CONTAINER_ERROR, "alloc", "process error",
@@ -218,7 +219,7 @@ public class ContainerController {
         return response;
     }
 
-    @InterceptCheck(checkers = {MatchOpenChecker.class, LoginChecker.class})
+    @InterceptCheck(checkers = {MatchOpenChecker.class, LoginChecker.class, ContainerConcurrentChecker.class})
     @PostMapping("/renew_container")
     public Response<String> renewContainer(@RequestBody @Valid ContainerRequest req, BindingResult bindingResult) {
         Response<String> response = new Response<>();
@@ -253,7 +254,7 @@ public class ContainerController {
                 .format(ZonedDateTime.now().plus(1, ChronoUnit.HOURS)));
         try {
             RenewContainerResp resp =
-                    httpService.sendPostRequest(renewUrl + envId, param, RenewContainerResp.class);
+                    containerHttpService.sendPostRequest(renewUrl + envId, param, RenewContainerResp.class);
             ContainerStatus status = resp.getStatus();
             if (status.equals(ContainerStatus.PROCESS_ERROR)) {
                 logService.log(LogEvent.LOG_EVENT_CONTAINER_ERROR, "renew", "process error",
@@ -284,7 +285,7 @@ public class ContainerController {
         return response;
     }
 
-    @InterceptCheck(checkers = {MatchOpenChecker.class, LoginChecker.class})
+    @InterceptCheck(checkers = {MatchOpenChecker.class, LoginChecker.class, ContainerConcurrentChecker.class})
     @PostMapping("/free_container")
     public Response<String> freeContainer(@RequestBody @Valid ContainerRequest req, BindingResult bindingResult) {
         Response<String> response = new Response<>();
@@ -316,7 +317,7 @@ public class ContainerController {
         /* 向管理端申请回收 */
         try {
             DeleteContainerResp resp =
-                    httpService.sendGetRequest(deleteUrl + envId, Collections.emptyMap(), DeleteContainerResp.class);
+                    containerHttpService.sendGetRequest(deleteUrl + envId, Collections.emptyMap(), DeleteContainerResp.class);
             ContainerStatus status = resp.getStatus();
             if (status.equals(ContainerStatus.DELETED)) {
                 logService.log(LogEvent.LOG_EVENT_CONTAINER_DELETE,

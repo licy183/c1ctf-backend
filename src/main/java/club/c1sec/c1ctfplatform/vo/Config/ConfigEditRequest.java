@@ -27,4 +27,7 @@ public class ConfigEditRequest {
 
     @JsonProperty("container_flag_format")
     private String containerFlagFormat;
+
+    @JsonProperty("login_limit")
+    private Boolean loginLimit;
 }

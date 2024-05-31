@@ -15,9 +15,7 @@ public class MatchStartedChecker implements BasicChecker {
 
     @Override
     public boolean check(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
-        Date currDate = new Date();
-        Date openDate = Date.from(configService.getMatchOpenTime());
-        return currDate.after(openDate);
+        return configService.getMatchStarted();
     }
 
     @Override
